@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -70,80 +71,36 @@
             <div class="row">
 
                 <div class="col-lg-8 entries">
-
+                    {% for post in posts %}
                     <article class="entry">
 
 
 
                         <h2 class="entry-title">
-                            TO TRAVEL IS TO LIVE.
+                            {{ post.title }}
                         </h2>
 
-                        <div class="entry-meta">
-                            <ul>
-                                <li class="d-flex align-items-center"> Travel</li>
-                            </ul>
-                        </div>
 
                         <div class="entry-content">
 
-                            <p>
-                                Travelling is an amazing way to learn a lot of things in life. A lot of people around the world travel every year to many places. Moreover, it is important to travel to humans. Some travel to learn more while some travel to take a break from their life. No matter the reason, travelling opens a big door for us to explore the world beyond our imagination and indulge in many things.</p>
-                            <div class="read-more">
+                            <ul>
+
+                                <li>
+
+                                    <p>{{ post.description }}</p>
+                                </li>
+
+                            </ul>
+
+                              <div class="read-more">
                                 <a href="single_post.html">Read More</a>
                             </div>
                         </div>
 
                     </article><!-- End blog entry -->
 
-                    <article class="entry">
+                    {% endfor %}
 
-
-
-                        <h2 class="entry-title">
-                            "The art of life is to know how to enjoy a little and to endure very much."
-                        </h2>
-
-                        <div class="entry-meta">
-                            <ul>
-                                <li class="d-flex align-items-center"> Life</li>
-                            </ul>
-                        </div>
-
-                        <div class="entry-content">
-                            <p>
-                                Life is a journey, not a destination. It’s the journey that matters. It’s the journey we all take to get where we want to be in life. It’s the journey that defines us and our success. Our lives are full of choices and decisions, but they are usually made by us alone. We make them for ourselves and for our loved ones, but in most cases we aren’t really aware of what we’re doing or why it’s important to us. It’s time to change that! There is no better way to learn about yourself than by taking meaningful steps towards your goals and dreams – with AI help!
-                            </p>
-                            <div class="read-more">
-                                <a href="single_post.html">Read More</a>
-                            </div>
-                        </div>
-
-                    </article><!-- End blog entry -->
-
-                    <article class="entry">
-
-
-
-                        <h2 class="entry-title">
-                            “Waking up in India is like waking up to life itself.”
-                        </h2>
-
-                        <div class="entry-meta">
-                            <ul>
-                                <li class="d-flex align-items-center"> India</li>
-                            </ul>
-                        </div>
-
-                        <div class="entry-content">
-                            <p>
-                                India is a land of various cultures and a rich heritage. It is the seventh-largest country by area and the second-most populous country globally. The peacock is India’s national bird, and the Bengal tiger is the country’s national animal. The national song is named Vande Matram (written by Bankimchandra Chatterji). The Indian national song was first performed at the Indian National Congress in 1896. ‘Jana Gana Mana,’ India’s national anthem, is sung in 52 seconds. The national flag of India is named Tiranga, which is made up of three colours: saffron, white, and green, with the Ashoka Chakra in navy blue in the centre.                </p>
-                            <div class="read-more">
-                                <a href="single_post.html">Read More</a>
-                            </div>
-                        </div>
-
-                    </article><!-- End blog entry -->
 
 
                     <div class="blog-pagination">
@@ -166,6 +123,7 @@
                             <ul>
                                 <li><a href="cat.html">First Category <span>(30)</span></a></li>
                                 <li><a href="cat.html">Second Category<span>(12)</span></a></li>
+
                             </ul>
                         </div><!-- End sidebar categories-->
 

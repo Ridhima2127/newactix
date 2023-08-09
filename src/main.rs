@@ -16,7 +16,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/posts")
                     .route("/", web::get().to(controller::posts::index))
-                    .route("/display", web::get().to(controller::posts::posts_display))
+                    .route("/display", web::get().to(controller::posts::index))
 
                     .route(
                         "/{page_number}",

@@ -20,7 +20,7 @@ pub struct Category {
     pub name: String,
 }
 
-pub async fn posts_display() -> Result<HttpResponse, actix_web::Error> {
+pub async fn index() -> Result<HttpResponse, actix_web::Error> {
 
     let posts = database::get_posts().await?;
 
@@ -40,7 +40,7 @@ pub async fn posts_display() -> Result<HttpResponse, actix_web::Error> {
     });
 
 
-    let html_template = fs::read_to_string("templates/demo.html").expect("Failed to read the file");
+    let html_template = fs::read_to_string("templates/index.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -58,26 +58,7 @@ pub async fn posts_display() -> Result<HttpResponse, actix_web::Error> {
 }
 
 
-pub async fn index() -> Result<HttpResponse, actix_web::Error> {
-    let html_template =
-        fs::read_to_string("templates/index.html").expect("Failed to read the file");
 
-    let context = liquid::Object::new();
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}
 
 pub async fn specific_post() -> Result<HttpResponse, actix_web::Error> {
 
