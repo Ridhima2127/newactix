@@ -13,16 +13,23 @@ use crate::model::database;
 pub struct Post {
     pub title: String,
     pub description: String,
+    pub category: String,
+    pub category_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Category {
+    pub id: u64,
     pub name: String,
 }
 
 pub async fn index() -> Result<HttpResponse, actix_web::Error> {
 
+
+
     let posts = database::get_posts().await?;
+
+    let categories = database::get_categories().await?;
 
     let posts_array = posts
         .into_iter()
@@ -35,8 +42,20 @@ pub async fn index() -> Result<HttpResponse, actix_web::Error> {
         })
         .collect::<Vec<Value>>();
 
+    let categories_array = categories
+        .into_iter()
+        .map(|category| {
+            let mut category_map = object!({
+             "id" : Value::scalar(category.id.to_string()),
+            "name" : Value::scalar(category.name),
+            });
+            Value::Object(category_map)
+        })
+        .collect::<Vec<Value>>();
+
     let mut context = object!({
         "posts":  Value::Array(posts_array),
+        "categories": Value::Array(categories_array),
     });
 
 
@@ -97,6 +116,54 @@ pub async fn specific_post() -> Result<HttpResponse, actix_web::Error> {
         .body(output))
 
 }
+
+pub async fn category_posts( path: web::Path<i32>) -> Result<HttpResponse> {
+
+    let category_id = path.into_inner();
+
+    let posts = database::get_posts().await?;
+
+    let posts: Vec<Post> =  posts
+            .into_iter()
+            .filter(|post| post.category_id == category_id  as u64)
+            .collect();
+
+
+    let posts_array = posts
+        .into_iter()
+        .map(|post| {
+            let mut post_map = object!({
+                "title": Value::scalar(post.title),
+                "description": Value::scalar(post.description),
+                "category": Value::scalar(post.category),
+            });
+            Value::Object(post_map)
+        })
+        .collect::<Vec<Value>>();
+
+    let mut context = object!({
+        "posts": Value::Array(posts_array),
+        "category_id": Value::scalar(category_id),
+    });
+
+
+    let html_template = fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
+
+    let template = liquid::ParserBuilder::with_stdlib()
+        .build()
+        .unwrap()
+        .parse(&html_template)
+        .expect("Failed to parse template");
+
+    let output = template
+        .render(&context)
+        .expect("Failed to render the template");
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(output))
+}
+
 
 pub async fn new_post() -> Result<HttpResponse, actix_web::Error> {
     let html_template =

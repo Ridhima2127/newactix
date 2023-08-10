@@ -18,6 +18,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/", web::get().to(controller::posts::index))
                     .route("/display", web::get().to(controller::posts::index))
 
+
                     .route(
                         "/{page_number}",
                         web::get().to(controller::posts::specific_post),
@@ -26,11 +27,13 @@ async fn main() -> std::io::Result<()> {
                         "/{post_id}",
                         web::get().to(controller::posts::specific_post),
                     )
-                    .route("/category/{category_id}", web::get().to(_todo))
+                   /* .route("/category/{category_id}", web::get().to(controller::posts::category_posts))*/
                     .route(
                         "/category/{category_id}/page/{page_number}",
                         web::get().to(_todo),
-                    ),
+                    )
+                    .route("/category/{category_id}", web::get().to(controller::posts::category_posts))
+                 /*   .route(" /category/{category_id}", web::get().to(controller::posts::category_posts)),*/
             )
 
             .service(

@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,13 +8,13 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-    <title>Blog </title>
+    <title>Blog Single Post</title>
     <meta content="" name="description">
     <meta content="" name="keywords">
 
     <!-- Favicons -->
-    <link href="assets/img/favicon.png" rel="icon">
-    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="/assets/img/favicon.png" rel="icon">
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
@@ -32,6 +34,7 @@
 
 <body>
 
+<!-- ======= Header ======= -->
 <header id="header" class="header fixed-top">
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
@@ -43,7 +46,7 @@
         <nav id="navbar" class="navbar">
             <ul>
 
-                <li><a class="getstarted scrollto" onclick="window.location.href='pages-login.html'">Login</a></li>
+                <li><a class="getstarted scrollto" href="#login">Login</a></li>
             </ul>
             <i class="bi bi-list mobile-nav-toggle"></i>
         </nav><!-- .navbar -->
@@ -51,30 +54,28 @@
     </div>
 </header><!-- End Header -->
 
-
 <main id="main">
 
     <!-- ======= Breadcrumbs ======= -->
     <section class="breadcrumbs">
         <div class="container">
 
-
-            <h2><center>Posts</center></h2>
+            <h2><center>Single Post</center></h2>
 
         </div>
     </section><!-- End Breadcrumbs -->
 
-    <!-- ======= Blog Section ======= -->
+
     <section id="blog" class="blog">
         <div class="container" data-aos="fade-up">
 
             <div class="row">
 
-                <div class="col-lg-8 entries">
+                <div class="col-lg-12 entries">
                     {% for post in posts %}
                     <article class="entry">
 
-
+                        <h2>Category: {{ category_id }}</h2>
 
                         <h2 class="entry-title">
                             {{ post.title }}
@@ -86,15 +87,12 @@
                             <ul>
 
                                 <li>
+                                    <p>Category: {{ post.category }}</p>
 
                                     <p>{{ post.description }}</p>
                                 </li>
 
                             </ul>
-
-                              <div class="read-more">
-                                <a href="single_post.html">Read More</a>
-                            </div>
                         </div>
 
                     </article><!-- End blog entry -->
@@ -102,45 +100,13 @@
                     {% endfor %}
 
 
-
-                    <div class="blog-pagination">
-                        <ul class="justify-content-center">
-                            <li><a href="#">1</a></li>
-                            <li class="active"><a href="#">2</a></li>
-                            <li><a href="#">3</a></li>
-                        </ul>
-                    </div>
-
                 </div><!-- End blog entries list -->
-
-                <div class="col-lg-4">
-
-                    <div class="sidebar">
-
-
-                        <h3 class="sidebar-title">Categories</h3>
-                        {% for category in categories %}
-                        <div class="sidebar-item categories">
-                            <ul>
-                                <li><a href="/posts/category/{{category.id}}">First Category </a></li>
-                            </ul>
-                            {% endfor %}
-                        </div><!-- End sidebar categories-->
-
-
-
-
-                    </div><!-- End sidebar -->
-
-                </div><!-- End blog sidebar -->
-
             </div>
 
         </div>
     </section><!-- End Blog Section -->
 
 </main><!-- End #main -->
-
 
 
 
