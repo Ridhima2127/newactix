@@ -1,13 +1,11 @@
-use std::fs;
+use crate::controller::posts::Category;
+use crate::model::database;
 use actix_web::{error, web, App, HttpResponse, HttpServer, Result};
 use liquid::model::Value;
 use liquid::object;
-use crate::controller::posts::Category;
-use crate::model::database;
-
+use std::fs;
 
 pub async fn categories_display() -> Result<HttpResponse, actix_web::Error> {
-
     let categories = database::get_categories().await?;
 
     let categories_array = categories
@@ -25,8 +23,8 @@ pub async fn categories_display() -> Result<HttpResponse, actix_web::Error> {
         "categories": Value::Array(categories_array),
     });
 
-
-    let html_template = fs::read_to_string("../../templates/catbk.html").expect("Failed to read the file");
+    let html_template =
+        fs::read_to_string("../../templates/cat.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -42,9 +40,6 @@ pub async fn categories_display() -> Result<HttpResponse, actix_web::Error> {
         .content_type("text/html; charset=utf-8")
         .body(output))
 }
-
-
-
 
 pub async fn new_category() -> Result<HttpResponse, actix_web::Error> {
     // TODO: Implement the logic to connect to database render the 'new_category.html.liquid' template.

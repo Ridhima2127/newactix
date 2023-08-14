@@ -1,13 +1,13 @@
-use actix_web::{error, web, App, HttpResponse, HttpServer, Result, ResponseError};
+use crate::model::database;
+use actix_web::error::ErrorInternalServerError;
+use actix_web::{error, web, App, HttpResponse, HttpServer, ResponseError, Result};
 use liquid::model::Value;
-use liquid::{object, Parser};
 use liquid::ParserBuilder;
+use liquid::{object, Parser};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs;
-use actix_web::error::ErrorInternalServerError;
-use crate::model::database;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Post {
@@ -21,12 +21,10 @@ pub struct Post {
 pub struct Category {
     pub id: u64,
     pub name: String,
+    pub num_of_posts: u64,
 }
 
 pub async fn index() -> Result<HttpResponse, actix_web::Error> {
-
-
-
     let posts = database::get_posts().await?;
 
     let categories = database::get_categories().await?;
@@ -48,6 +46,7 @@ pub async fn index() -> Result<HttpResponse, actix_web::Error> {
             let mut category_map = object!({
              "id" : Value::scalar(category.id.to_string()),
             "name" : Value::scalar(category.name),
+                "number": Value::scalar(category.num_of_posts.to_string()),
             });
             Value::Object(category_map)
         })
@@ -58,8 +57,8 @@ pub async fn index() -> Result<HttpResponse, actix_web::Error> {
         "categories": Value::Array(categories_array),
     });
 
-
-    let html_template = fs::read_to_string("templates/index.html").expect("Failed to read the file");
+    let html_template =
+        fs::read_to_string("templates/index.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -76,11 +75,7 @@ pub async fn index() -> Result<HttpResponse, actix_web::Error> {
         .body(output))
 }
 
-
-
-
 pub async fn specific_post() -> Result<HttpResponse, actix_web::Error> {
-
     let single_post = database::get_specific_post().await?;
 
     let single_post_array = single_post
@@ -98,8 +93,8 @@ pub async fn specific_post() -> Result<HttpResponse, actix_web::Error> {
         "posts":  Value::Array(single_post_array),
     });
 
-
-    let html_template = fs::read_to_string("templates/single_post.html").expect("Failed to read the file");
+    let html_template =
+        fs::read_to_string("templates/single_post.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -114,20 +109,17 @@ pub async fn specific_post() -> Result<HttpResponse, actix_web::Error> {
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(output))
-
 }
 
-pub async fn category_posts( path: web::Path<i32>) -> Result<HttpResponse> {
-
+pub async fn category_posts(path: web::Path<i32>) -> Result<HttpResponse> {
     let category_id = path.into_inner();
 
     let posts = database::get_posts().await?;
 
-    let posts: Vec<Post> =  posts
-            .into_iter()
-            .filter(|post| post.category_id == category_id  as u64)
-            .collect();
-
+    let posts: Vec<Post> = posts
+        .into_iter()
+        .filter(|post| post.category_id == category_id as u64)
+        .collect();
 
     let posts_array = posts
         .into_iter()
@@ -146,8 +138,8 @@ pub async fn category_posts( path: web::Path<i32>) -> Result<HttpResponse> {
         "category_id": Value::scalar(category_id),
     });
 
-
-    let html_template = fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
+    let html_template =
+        fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -163,7 +155,6 @@ pub async fn category_posts( path: web::Path<i32>) -> Result<HttpResponse> {
         .content_type("text/html; charset=utf-8")
         .body(output))
 }
-
 
 pub async fn new_post() -> Result<HttpResponse, actix_web::Error> {
     let html_template =
