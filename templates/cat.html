@@ -35,7 +35,7 @@
 <header id="header" class="header fixed-top">
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
-        <a href="blog.html" class="logo d-flex align-items-center">
+        <a href="/posts/" class="logo d-flex align-items-center">
             <img src="/assets/img/logo.png" alt="">
             <span>Journey</span>
         </a>
@@ -106,8 +106,7 @@
                         <h3 class="sidebar-title">Categories</h3>
                         <div class="sidebar-item categories">
                             <ul>
-                                <li><a href="cat.html">First Category <span>(30)</span></a></li>
-                                <li><a href="cat.html">Second Category<span>(12)</span></a></li>
+                                <li><a href="/posts/category/{{category.id}}">{{category.name }}<span>{{category.number}}</span></a></li>
                             </ul>
                         </div><!-- End sidebar categories-->
 

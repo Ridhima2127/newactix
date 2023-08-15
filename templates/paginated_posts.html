@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Your head content here -->
+
+
+</head>
+
+<body>
+
+<!-- Your header content here -->
+
+<main id="main">
+
+    <!-- ======= Breadcrumbs ======= -->
+    <section class="breadcrumbs">
+        <div class="container">
+            <h2><center>Blog</center></h2>
+        </div>
+    </section><!-- End Breadcrumbs -->
+
+    <!-- ======= Blog Section ======= -->
+    <section id="blog" class="blog">
+        <div class="container" data-aos="fade-up">
+
+            <div class="row">
+
+                <div class="col-lg-8 entries">
+                    {% for post in posts %}
+                    <article class="entry">
+                        <h2 class="entry-title">
+                            {{ post.title }}
+                        </h2>
+                        <div class="entry-content">
+                            <p>{{ post.description }}</p>
+                        </div>
+                    </article><!-- End blog entry -->
+                    {% endfor %}
+
+                    <!-- Pagination links -->
+                    <div class="blog-pagination">
+                        <ul class="justify-content-center">
+
+                            {% for page in pagination.pages %}
+                            <li {%
+                                if page == pagination.current %}class="active"{% endif %}><a href="/posts/page/{{ page }}">{{ page }}</a></li>
+                            {% endfor %}
+
+                        </ul>
+                    </div>
+                </div><!-- End blog entries list -->
+
+                <div class="col-lg-4">
+                    <!-- Your sidebar content here -->
+                </div><!-- End blog sidebar -->
+
+            </div>
+
+        </div>
+    </section><!-- End Blog Section -->
+
+</main><!-- End #main -->
+
+</body>
+
+</html>
