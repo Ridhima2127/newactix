@@ -33,14 +33,26 @@ pub struct PaginationParams {
     pub limit: Option<i64>,
 }
 
-pub async fn index() -> Result<HttpResponse, actix_web::Error> {
+pub async fn index(page_number: web::Path<i32>) -> Result<HttpResponse, actix_web::Error> {
+
     let posts = database::get_posts().await?;
 
     let categories = database::get_categories().await?;
 
+    let limit = 3;
+
+    let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
+
+    let page = page_number.into_inner();
+
+
+
+    let offset = (page-1)*limit;
 
     let posts_array = posts
         .into_iter()
+        .skip(offset as usize)
+        .take(limit as usize)
         .map(|post| {
             let mut post_map = object!({
                 "post_id": Value::scalar(post.post_id.to_string()),
@@ -63,9 +75,22 @@ pub async fn index() -> Result<HttpResponse, actix_web::Error> {
         })
         .collect::<Vec<Value>>();
 
+    let pagination = object!({
+        "prev": if page > 1 { Value::scalar(page - 1) } else { Value::Nil },
+        "next": if page < total_pages { Value::scalar(page + 1) } else { Value::Nil },
+        "current": Value::scalar(page),
+        "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
+    });
+
+
+
+
+
+
     let mut context = object!({
         "posts":  Value::Array(posts_array),
         "categories": Value::Array(categories_array),
+         "pagination": Value::Object(pagination),
     });
 
     let html_template =
@@ -169,6 +194,7 @@ pub async fn category_posts(path: web::Path<i32>) -> Result<HttpResponse> {
 }
 
 pub async fn paginated_posts(page_number: web::Path<i32>)->Result<HttpResponse>{
+
 
     let page = page_number.into_inner();
 

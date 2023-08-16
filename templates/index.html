@@ -105,9 +105,12 @@
 
                     <div class="blog-pagination">
                         <ul class="justify-content-center">
-                            <li><a href="#">1</a></li>
-                            <li class="active"><a href="#">2</a></li>
-                            <li><a href="#">3</a></li>
+
+                            {% for page in pagination.pages %}
+                            <li {%
+                                if page == pagination.current %}class="active"{% endif %}><a href="/posts/{{ page }}">{{ page }}</a></li>
+                            {% endfor %}
+
                         </ul>
                     </div>
 
