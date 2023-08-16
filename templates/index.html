@@ -43,7 +43,7 @@
         <nav id="navbar" class="navbar">
             <ul>
 
-                <li><a class="getstarted scrollto" onclick="window.location.href='pages-login.html'">Login</a></li>
+                <li><a class="getstarted scrollto" onclick="window.location.href='/login'">Login</a></li>
             </ul>
             <i class="bi bi-list mobile-nav-toggle"></i>
         </nav><!-- .navbar -->
@@ -103,13 +103,25 @@
 
 
 
+
+
                     <div class="blog-pagination">
                         <ul class="justify-content-center">
+                        {% if pagination.prev %}
+                       <li> <a href="?page_number={{ pagination.prev }}">Previous</a></li>
+                        {% endif %}
 
-                            {% for page in pagination.pages %}
-                            <li {%
-                                if page == pagination.current %}class="active"{% endif %}><a href="/posts/{{ page }}">{{ page }}</a></li>
-                            {% endfor %}
+                        {% for page in pagination.pages %}
+                        {% if page == pagination.current %}
+                        <span>{{ page }}</span>
+                        {% else %}
+                            <li><a href="?page_number={{ page }}">{{ page }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if pagination.next %}
+                            <li> <a href="?page_number={{ pagination.next }}">Next</a>
+                        {% endif %}
 
                         </ul>
                     </div>
@@ -128,7 +140,7 @@
                         {% for category in categories %}
                         <div class="sidebar-item categories">
                             <ul>
-                                <li><a href="/posts/category/{{category.id}}">{{category.name }}<span>{{category.number}}</span></a></li>
+                                <li><a href="/posts/category/{{category.id}}">{{category.name }}<span>({{ category.number}})</span></a></li>
                             </ul>
                             {% endfor %}
                         </div><!-- End sidebar categories-->

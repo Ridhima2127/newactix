@@ -18,19 +18,20 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/posts")
                     .route("/", web::get().to(controller::posts::index))
-                    .route("/{page_number}", web::get().to(controller::posts::index))
+                    .route("/page/{page_number}", web::get().to(controller::posts::index))
                     .route(
                         "/{post_id}",
                         web::get().to(controller::posts::specific_post),
                     )
-                    .route(
+                    /*.route(
                         "/page/{page_number}",
                         web::get().to(controller::posts::paginated_posts),
-                    )
+                    )*/
                     .route(
                         "/category/{category_id}/page/{page_number}",
                         web::get().to(_todo),
                     )
+                   /* /posts/category/page*/
                     .route(
                         "/category/{category_id}",
                         web::get().to(controller::posts::category_posts),
@@ -39,7 +40,7 @@ async fn main() -> std::io::Result<()> {
             )
             .service(
                 web::resource("/login")
-                    .route(web::get().to(_todo))
+                    .route(web::get().to(controller::login::login))
                     .route(web::post().to(_todo)),
             )
             .service(web::resource("/logout").to(_todo))
