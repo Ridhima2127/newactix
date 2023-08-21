@@ -33,6 +33,30 @@ pub(crate) async fn get_posts() -> Result<Vec<Post>, actix_web::Error> {
             category: "Life".to_string(),
             category_id: 2,
         },
+        Post {
+            post_id: 5,
+            title: "Fifth Post".to_string(),
+            description: "Be so happy that, when other people look at you, they become happy too."
+                .to_string(),
+            category: "Life".to_string(),
+            category_id: 2,
+        },
+        Post {
+            post_id: 6,
+            title: "Sixth Post".to_string(),
+            description: "Be so happy that, when other people look at you, they become happy too."
+                .to_string(),
+            category: "Life".to_string(),
+            category_id: 2,
+        },
+        Post {
+            post_id: 7,
+            title: "Seventh Post".to_string(),
+            description: "Be so happy that, when other people look at you, they become happy too."
+                .to_string(),
+            category: "Life".to_string(),
+            category_id: 2,
+        },
     ];
 
     Ok(posts)
@@ -53,6 +77,11 @@ pub(crate) async fn get_categories() -> Result<Vec<Category>, actix_web::Error> 
         Category {
             id: 3,
             name: "Home".to_string(),
+            num_of_posts: 14,
+        },
+        Category {
+            id: 4,
+            name: "India".to_string(),
             num_of_posts: 14,
         },
     ];

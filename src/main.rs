@@ -3,8 +3,10 @@
 mod controller;
 mod model;
 
+use crate::controller::posts::{category_posts};
 use actix_web::{web, App, HttpResponse, HttpServer};
-use crate::controller::posts::paginated_posts;
+
+
 
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
@@ -17,37 +19,34 @@ async fn main() -> std::io::Result<()> {
             .service(web::resource("/").to(controller::posts::index))
             .service(
                 web::scope("/posts")
-                    .route("/", web::get().to(controller::posts::index))
-                    .route("/page/{page_number}", web::get().to(controller::posts::index))
+                    .route("", web::get().to(controller::posts::index))
+                    .route(
+                        "/page/{page_number}",
+                        web::get().to(controller::posts::pagination_index),
+                    )
                     .route(
                         "/{post_id}",
                         web::get().to(controller::posts::specific_post),
                     )
-                    /*.route(
-                        "/page/{page_number}",
-                        web::get().to(controller::posts::paginated_posts),
-                    )*/
                     .route(
                         "/category/{category_id}/page/{page_number}",
-                        web::get().to(_todo),
+                        web::get().to(category_posts),
                     )
-                   /* /posts/category/page*/
+                    /* /posts/category/page*/
                     .route(
                         "/category/{category_id}",
                         web::get().to(controller::posts::category_posts),
                     ),
+            )
 
-            )
-            .service(
-                web::resource("/login")
-                    .route(web::get().to(controller::login::login))
-                    .route(web::post().to(_todo)),
-            )
+                    .service(web::resource("/login").route(web::get().to(controller::login::login::login)))
+                    .service(web::resource("/login_user").route(web::post().to(controller::login::login::login_user)))
+
             .service(web::resource("/logout").to(_todo))
             .service(actix_files::Files::new("/assets", "assets/").show_files_listing())
             .service(
                 web::scope("/admin")
-                    .route("/", web::get().to(controller::posts::index))
+                    /*.route("/", web::get().to(controller::admin::admin_posts::admin_posts))*/
                     .route("/page/{page_number}", web::get().to(_todo))
                     .route(
                         "/cat",

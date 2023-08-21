@@ -9,9 +9,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs;
 
-
-#[derive(Serialize, Deserialize, Debug)]
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Post {
     pub post_id: u64,
     pub title: String,
@@ -32,7 +30,10 @@ pub struct PaginationQuery {
     pub page_number: Option<i32>,
 }
 
-pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, actix_web::Error> {
+pub async fn pagination_index(
+    page_number: web::Path<i32>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let page_number = *page_number;
 
     let posts = database::get_posts().await?;
 
@@ -40,7 +41,88 @@ pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, a
 
     let mut category_post_counts = vec![0; categories.len()];
     for (i, category) in categories.iter().enumerate() {
-        let count = posts.iter().filter(|post| post.category_id == category.id).count();
+        let count = posts
+            .iter()
+            .filter(|post| post.category_id == category.id)
+            .count();
+        category_post_counts[i] = count;
+    }
+
+    let limit = 3;
+
+    let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
+
+    let offset = (page_number - 1) * limit;
+
+    let posts_array = posts
+        .into_iter()
+        .skip(offset as usize)
+        .take(limit as usize)
+        .map(|post| {
+            let mut post_map = object!({
+                "post_id": Value::scalar(post.post_id.to_string()),
+                "title": Value::scalar(post.title),
+                "description": Value::scalar(post.description),
+            });
+            Value::Object(post_map)
+        })
+        .collect::<Vec<Value>>();
+
+    let categories_with_count = categories
+        .iter()
+        .zip(category_post_counts.iter())
+        .map(|(category, count)| {
+            let mut category_map = object!({
+                "id": Value::scalar(category.id.to_string()),
+                "name": Value::scalar(category.name.clone()),
+                "number": Value::scalar(count.to_string()),
+            });
+            Value::Object(category_map)
+        })
+        .collect::<Vec<Value>>();
+
+    let pagination = object!({
+        "prev": if page_number > 1 { Value::scalar(page_number - 1) } else { Value::Nil },
+        "next": if page_number < total_pages { Value::scalar(page_number + 1) } else { Value::Nil },
+        "current": Value::scalar(page_number),
+        "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
+    });
+
+    let mut context = object!({
+        "posts": Value::Array(posts_array),
+        "categories": Value::Array(categories_with_count),
+        "pagination": Value::Object(pagination),
+    });
+
+    let html_template =
+        fs::read_to_string("templates/index.html").expect("Failed to read the file");
+
+    let template = liquid::ParserBuilder::with_stdlib()
+        .build()
+        .unwrap()
+        .parse(&html_template)
+        .expect("Failed to parse template");
+
+    let output = template
+        .render(&context)
+        .expect("Failed to render the template");
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(output))
+}
+
+pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, actix_web::Error> {
+    let posts = database::get_posts().await?;
+
+    let categories = database::get_categories().await?;
+
+    let mut category_post_counts = vec![0; categories.len()];
+    for (i, category) in categories.iter().enumerate() {
+        let count = posts
+            .iter()
+            .filter(|post| post.category_id == category.id)
+            .count();
         category_post_counts[i] = count;
     }
 
@@ -48,13 +130,11 @@ pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, a
 
     let PaginationQuery { page_number } = query.into_inner();
 
-
     let page = page_number.unwrap_or(1);
 
     let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
 
-
-    let offset = (page-1)*limit;
+    let offset = (page - 1) * limit;
 
     let posts_array = posts
         .into_iter()
@@ -83,14 +163,12 @@ pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, a
         })
         .collect::<Vec<Value>>();
 
-
     let pagination = object!({
         "prev": if page > 1 { Value::scalar(page - 1) } else { Value::Nil },
         "next": if page < total_pages { Value::scalar(page + 1) } else { Value::Nil },
         "current": Value::scalar(page),
         "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
     });
-
 
     let mut context = object!({
         "posts":  Value::Array(posts_array),
@@ -153,8 +231,10 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
     }
 }
 
-/*pub async fn category_posts(path: web::Path<i32>, query: web::Query<PaginationQuery>,) -> Result<HttpResponse> {
-    let category_id = path.into_inner();
+pub async fn category_posts(
+    path: web::Path<(i32, i32)>,
+) -> Result<HttpResponse> {
+    let (category_id, page_number) = path.into_inner();
 
     let posts = database::get_posts().await?;
 
@@ -163,96 +243,46 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
         .filter(|post| post.category_id == category_id as u64)
         .collect();
 
+
     let limit = 3;
     let num_posts_in_category = category_posts.len();
 
-
-    let PaginationQuery { page_number } = query.into_inner();
-
-    let page = page_number.unwrap_or(1);
 
     let total_pages = (num_posts_in_category as f64 / limit as f64).ceil() as i32;
 
-    let offset = ((page - 1) * limit).min(num_posts_in_category as i32 - limit);
+    let offset = ((page_number- 1) * limit);
 
 
-    let paginated_posts = category_posts
+
+
+
+    let posts = category_posts
         .into_iter()
         .skip(offset as usize)
         .take(limit as usize)
         .map(|post| {
             let mut post_map = object!({
-        "title": Value::scalar(post.title),
-        "description": Value::scalar(post.description),
-        "category": Value::scalar(post.category),
+            "title": Value::scalar(post.title),
+            "description": Value::scalar(post.description),
+            "category": Value::scalar(post.category),
+            });
+            Value::Object(post_map)
+        })
+        .collect::<Vec<Value>>();
+
+
+    let mut context = object!({
+    "posts": Value::Array(posts),
+    "category_id": Value::scalar(category_id),
+    "num_posts_in_category": Value::scalar(num_posts_in_category.to_string()),
+    "pagination": object!({
+    "prev": if page_number > 1 { Value::scalar(page_number - 1) } else { Value::Nil },
+            "next": if page_number < total_pages { Value::scalar(page_number + 1) } else { Value::Nil },
+    "current": Value::scalar(page_number),
+    "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
+        }),
         });
-            Value::Object(post_map)
-        })
-        .collect::<Vec<Value>>();
 
-
-    let mut context = object!({
-            "posts": Value::Array(paginated_posts),
-            "category_id": Value::scalar(category_id),
-            "num_posts_in_category": Value::scalar(num_posts_in_category.to_string()),
-            "pagination": object!({
-            "prev": if page > 1 { Value::scalar(page - 1) } else { Value::Nil },
-            "next": if page < total_pages { Value::scalar(page + 1) } else { Value::Nil },
-            "current": Value::scalar(page),
-            "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
-                }),
-                });
-
-    let html_template =
-        fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}*/
-
-
-pub async fn category_posts(path: web::Path<i32>,) -> Result<HttpResponse> {
-    let category_id = path.into_inner();
-
-    let posts = database::get_posts().await?;
-
-    let category_posts: Vec<Post> = posts
-        .into_iter()
-        .filter(|post| post.category_id == category_id as u64)
-        .collect();
-
-    let num_posts_in_category = category_posts.len();
-
-    let posts_array = category_posts
-        .into_iter()
-        .map(|post| {
-            let mut post_map = object!({
-                "title": Value::scalar(post.title),
-                "description": Value::scalar(post.description),
-                "category": Value::scalar(post.category),
-            });
-            Value::Object(post_map)
-        })
-        .collect::<Vec<Value>>();
-
-
-
-    let mut context = object!({
-        "posts": Value::Array(posts_array),
-        "category_id": Value::scalar(category_id),
-         "num_posts_in_category": Value::scalar(num_posts_in_category.to_string()),
-    });
 
     let html_template =
         fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
@@ -271,122 +301,6 @@ pub async fn category_posts(path: web::Path<i32>,) -> Result<HttpResponse> {
         .content_type("text/html; charset=utf-8")
         .body(output))
 }
-
-pub async fn paginated_posts(page_number: web::Path<i32>)->Result<HttpResponse>{
-
-
-    let page = page_number.into_inner();
-
-    let limit = 3;
-
-    let offset = (page-1)*limit;
-
-
-    let posts = vec![
-        Post {
-            post_id: 1,
-            title: "Post 1".to_string(),
-            description: "Description of Post 1".to_string(),
-            category: "Travel".to_string(),
-            category_id: 0,
-        },
-        Post {
-            post_id: 2,
-            title: "Post 2".to_string(),
-            description: "Description of Post 2".to_string(),
-            category: "Life".to_string(),
-            category_id: 0,
-        },
-        Post {
-            post_id: 3,
-            title: "Post 3".to_string(),
-            description: "Description of Post 3".to_string(),
-            category: "Life".to_string(),
-            category_id: 0,
-        },
-        Post {
-            post_id: 4,
-            title: "Post 4".to_string(),
-            description: "Description of Post 4".to_string(),
-            category: "Home".to_string(),
-            category_id: 0,
-        },
-        Post {
-            post_id: 5,
-            title: "Post 5".to_string(),
-            description: "Description of Post 5".to_string(),
-            category: "Home".to_string(),
-            category_id: 0,
-        },
-
-        Post {
-            post_id: 6,
-            title: "Post 6".to_string(),
-            description: "Description of Post 5".to_string(),
-            category: "Home".to_string(),
-            category_id: 0,
-        },
-        Post {
-            post_id: 7,
-            title: "Post 7".to_string(),
-            description: "Description of Post 5".to_string(),
-            category: "Home".to_string(),
-            category_id: 0,
-        },
-
-
-    ];
-
-
-    let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
-
-    let paginated_posts = posts
-        .into_iter()
-        .skip(offset as usize)
-        .take(limit as usize)
-        .map(|post| {
-            let mut post_map = object!({
-                "title": Value::scalar(post.title),
-                "description": Value::scalar(post.description),
-            });
-            Value::Object(post_map)
-        })
-        .collect::<Vec<Value>>();
-
-
-
-    let pagination = object!({
-        "prev": if page > 1 { Value::scalar(page - 1) } else { Value::Nil },
-        "next": if page < total_pages { Value::scalar(page + 1) } else { Value::Nil },
-        "current": Value::scalar(page),
-        "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
-    });
-
-    let context = object!({
-        "posts": Value::Array(paginated_posts),
-        "pagination": Value::Object(pagination),
-    });
-
-
-    let html_template =
-        fs::read_to_string("templates/paginated_posts.html").expect("Failed to read the file");
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}
-
-
 
 pub async fn new_post() -> Result<HttpResponse, actix_web::Error> {
     let html_template =
