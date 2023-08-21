@@ -6,6 +6,7 @@ mod model;
 use crate::controller::posts::category_posts;
 use actix_web::{web, App, HttpResponse, HttpServer};
 
+
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
 }
@@ -59,16 +60,15 @@ async fn main() -> std::io::Result<()> {
                         web::get()
                             .to(controller::admin::admin_categories::admin_category_pagination),
                     )
+                    .route("/new", web::get().to(controller::admin::new_post::new_post))
+
+
                     .route("/page/{page_number}", web::get().to(_todo))
-                    .route(
-                        "/cat",
-                        web::get().to(controller::category::categories_display),
-                    )
                     .route(
                         "/posts/{post_id}/edit",
                         web::get().to(controller::posts::edit_post),
                     )
-                    .route("/posts/new", web::get().to(controller::posts::new_post))
+
                     .route(
                         "/posts/post_id/delete",
                         web::get().to(controller::posts::delete_post),

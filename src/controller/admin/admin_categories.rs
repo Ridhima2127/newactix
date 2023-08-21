@@ -24,6 +24,7 @@ pub async fn admin_category_pagination(
         .take(limit as usize)
         .map(|category| {
             let mut category_map = object!({
+                  "id": Value::scalar(category.id.to_string()),
                 "name": Value::scalar(category.name),
             });
 
@@ -82,6 +83,7 @@ pub async fn admin_category(
         .take(limit as usize)
         .map(|category| {
             let mut category_map = object!({
+                  "id": Value::scalar(category.id.to_string()),
                 "name": Value::scalar(category.name),
             });
 

@@ -88,18 +88,27 @@
 
 
         <li class="nav-item">
-            <a class="nav-link collapsed" href="admin-posts.html">
+            <a class="nav-link collapsed" href="/admin/">
                 <i class="bi bi-envelope"></i>
                 <span>Posts</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link " href="admin-categories.html">
+            <a class="nav-link " href="/admin/category">
                 <i class="bi bi-card-list"></i>
                 <span>Categories</span>
             </a>
         </li>
+
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="/">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </li>
+
 
     </ul>
 
@@ -115,7 +124,7 @@
         </nav>
     </div><!-- End Page Title -->
 
-    <button type="button" class="btn btn-primary"  onclick="window.location.href='new_category.html'" style ="position: fixed;
+    <button type="button" class="btn btn-primary"  onclick="window.location.href='/admin/new'" style ="position: fixed;
     right: 31px;" >New</button>
     <br>
     <br>
@@ -133,61 +142,25 @@
                         <table class="table datatable">
                             <thead>
                             <tr>
-                                <th scope="col"  width="20%">ID</th>
-                                <th scope="col"  width="60%">Name</th>
-                                <th scope="col"  width="20%">Action</th>
-
+                                <th scope="col" width="20%">ID</th>
+                                <th scope="col" width="60%">Name</th>
+                                <th scope="col" width="20%">Action</th>
                             </tr>
                             </thead>
                             <tbody>
+                            {% for category in categories %}
                             <tr>
-                                <th scope="row">1</th>
-                                <td>Travel</td>
-
-
-                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
-                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
+                                <th scope="row">{{ category.id }}</th>
+                                <td>{{ category.name }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp;&nbsp;
+                                    <button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button>
+                                </td>
                             </tr>
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>Career</td>
-
-
-
-                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
-                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>Life</td>
-
-
-
-                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
-                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">4</th>
-                                <td>Family</td>
-
-
-
-                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
-                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">5</th>
-                                <td>World</td>
-
-
-
-                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
-                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
-                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
-                        <!-- End Table with stripped rows -->
-
                     </div>
                 </div>
 
