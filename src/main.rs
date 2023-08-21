@@ -3,10 +3,8 @@
 mod controller;
 mod model;
 
-use crate::controller::posts::{category_posts};
+use crate::controller::posts::category_posts;
 use actix_web::{web, App, HttpResponse, HttpServer};
-
-
 
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
@@ -38,15 +36,29 @@ async fn main() -> std::io::Result<()> {
                         web::get().to(controller::posts::category_posts),
                     ),
             )
-
-                    .service(web::resource("/login").route(web::get().to(controller::login::login::login)))
-                    .service(web::resource("/login_user").route(web::post().to(controller::login::login::login_user)))
-
+            .service(web::resource("/login").route(web::get().to(controller::login::login::login)))
+            .service(
+                web::resource("/login_user")
+                    .route(web::post().to(controller::login::login::login_user)),
+            )
             .service(web::resource("/logout").to(_todo))
             .service(actix_files::Files::new("/assets", "assets/").show_files_listing())
             .service(
                 web::scope("/admin")
-                    /*.route("/", web::get().to(controller::admin::admin_posts::admin_posts))*/
+                    .route("/", web::get().to(controller::admin::admin_posts::homepage))
+                    .route(
+                        "/page/{page_number}",
+                        web::get().to(controller::admin::admin_posts::pagination_homepage),
+                    )
+                    .route(
+                        "/category",
+                        web::get().to(controller::admin::admin_categories::admin_category),
+                    )
+                    .route(
+                        "/category/page/{page_number}",
+                        web::get()
+                            .to(controller::admin::admin_categories::admin_category_pagination),
+                    )
                     .route("/page/{page_number}", web::get().to(_todo))
                     .route(
                         "/cat",

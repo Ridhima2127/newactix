@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-    <title>Admin Posts</title>
+    <title>Admin Categories</title>
     <meta content="" name="description">
     <meta content="" name="keywords">
 
@@ -38,8 +38,8 @@
 <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-        <a href="/index.html" class="logo d-flex align-items-center">
-            <img src="/assets/img/logo.png" alt="">
+        <a href="/admin_categories.html" class="logo d-flex align-items-center">
+            <img src="/assets/img/logo.png" alt="" >
             <span class="d-none d-lg-block">Journey</span>
         </a>
     </div><!-- End Logo -->
@@ -53,7 +53,7 @@
                 <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
                     <img src="/assets/img/messages-1.jpg" alt="Profile" class="rounded-circle">
                     <span class="d-none d-md-block dropdown-toggle ps-2">User</span>
-                </a><!-- End Profile Iamge Icon -->
+                </a>
 
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
                     <li class="dropdown-header">
@@ -88,14 +88,14 @@
 
 
         <li class="nav-item">
-            <a class="nav-link" href="admin-posts.html">
+            <a class="nav-link collapsed" href="admin-posts.html">
                 <i class="bi bi-envelope"></i>
                 <span>Posts</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link collapsed" href="/admin/category">
+            <a class="nav-link " href="admin-categories.html">
                 <i class="bi bi-card-list"></i>
                 <span>Categories</span>
             </a>
@@ -109,15 +109,18 @@
 <main id="main" class="main">
 
     <div class="pagetitle">
-        <h1>Posts</h1>
+        <h1>Categories</h1>
         <nav>
 
         </nav>
     </div><!-- End Page Title -->
-    <button type="button" class="btn btn-primary" onclick="window.location.href='new_post.html'" style ="position: fixed;
+
+    <button type="button" class="btn btn-primary"  onclick="window.location.href='new_category.html'" style ="position: fixed;
     right: 31px;" >New</button>
     <br>
     <br>
+
+
     <section class="section">
         <div class="row">
             <div class="col-lg-12">
@@ -127,61 +130,90 @@
 
 
                         <!-- Table with stripped rows -->
-                        <table class="table">
+                        <table class="table datatable">
                             <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Action</th>
+                                <th scope="col"  width="20%">ID</th>
+                                <th scope="col"  width="60%">Name</th>
+                                <th scope="col"  width="20%">Action</th>
+
                             </tr>
                             </thead>
                             <tbody>
-                            {% for post in posts %}
                             <tr>
-                                <td>{{ forloop.index }}</td>
-                                <td>{{ post.title }}</td>
-                                <td>{{ post.description }}</td>
-                                <td>
+                                <th scope="row">1</th>
+                                <td>Travel</td>
 
-                                    <button type="button" class="btn btn-success" onclick="window.location.href='edit_post.html'">Edit</button>
-                                    <button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button>
-                                </td>
+
+                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
                             </tr>
-                            {% endfor %}
+                            <tr>
+                                <th scope="row">2</th>
+                                <td>Career</td>
+
+
+
+                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">3</th>
+                                <td>Life</td>
+
+
+
+                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">4</th>
+                                <td>Family</td>
+
+
+
+                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">5</th>
+                                <td>World</td>
+
+
+
+                                <td>  <button type="button" class="btn btn-success" onclick="window.location.href='edit_category.html'">Edit</button>
+                                    &nbsp &nbsp<button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button></td>
+                            </tr>
                             </tbody>
                         </table>
-
                         <!-- End Table with stripped rows -->
-
-
 
                     </div>
                 </div>
 
-
             </div>
+
             <div class="blog-pagination" style="background-color:rgba(247, 247, 247, 0.5);">
                 <ul style="list-style: none; display: flex; justify-content: center; padding: 0;">
                     {% if pagination.prev %}
-                    <li style="margin-right: 10px;"><a href="/admin/page/{{ pagination.prev }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">Previous</a></li>
+                    <li style="margin-right: 10px;"><a href="/admin/category/page/{{ pagination.prev }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">Previous</a></li>
                     {% endif %}
 
                     {% for page in pagination.pages %}
                     {% if page == pagination.current %}
                     <li style="margin-right: 10px;"><span class="active" style="display: block; padding: 10px 15px; border: 1px solid #007bff; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">{{ page }}</span></li>
                     {% else %}
-                    <li style="margin-right: 10px;"><a href="/admin/page/{{ page }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">{{ page }}</a></li>
+                    <li style="margin-right: 10px;"><a href="/admin/category/page/{{ page }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">{{ page }}</a></li>
                     {% endif %}
                     {% endfor %}
 
                     {% if pagination.next %}
-                    <li><a href="/admin/page/{{ pagination.next }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">Next</a></li>
+                    <li><a href="/admin/category/page/{{ pagination.next }}" style="display: block; padding: 10px 15px; border: 1px solid #ccc; background-color: #f7f7f7; color: #333; text-decoration: none; border-radius: 5px;">Next</a></li>
                     {% endif %}
                 </ul>
             </div>
-        </div><!-- End blog entries list -->
 
+        </div>
     </section>
 
 </main><!-- End #main -->
@@ -191,24 +223,24 @@
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
 <!-- Vendor JS Files -->
-<script src="assets/vendor/apexcharts/apexcharts.min.js"></script>
-<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="assets/vendor/chart.js/chart.umd.js"></script>
-<script src="assets/vendor/echarts/echarts.min.js"></script>
-<script src="assets/vendor/quill/quill.min.js"></script>
-<script src="assets/vendor/simple-datatables/simple-datatables.js"></script>
-<script src="assets/vendor/tinymce/tinymce.min.js"></script>
-<script src="assets/vendor/php-email-form/validate.js"></script>
+<script src="/assets/vendor/apexcharts/apexcharts.min.js"></script>
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/chart.js/chart.umd.js"></script>
+<script src="/assets/vendor/echarts/echarts.min.js"></script>
+<script src="/assets/vendor/quill/quill.min.js"></script>
+<script src="/assets/vendor/simple-datatables/simple-datatables.js"></script>
+<script src="/assets/vendor/tinymce/tinymce.min.js"></script>
+<script src="/assets/vendor/php-email-form/validate.js"></script>
 
 <!-- Template Main JS File -->
-<script src="assets/js/main.js"></script>
+<script src="/assets/js/main.js"></script>
 
 <script>
         function deleteConfirmation() {
             if (window.confirm("Are you sure you want to delete?")) {
                 alert("Item deleted successfully!");
             } else {
-
+                alert("Deletion canceled!");
             }
         }
     </script>

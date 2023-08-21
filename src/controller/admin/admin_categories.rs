@@ -5,30 +5,29 @@ use liquid::model::Value;
 use liquid::object;
 use std::fs;
 
-pub async fn pagination_homepage(
+pub async fn admin_category_pagination(
     page_number: web::Path<i32>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let page_number = *page_number;
 
-    let posts = database::get_posts().await?;
+    let categories = database::get_categories().await?;
 
     let limit = 3;
 
-    let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
+    let total_pages = (categories.len() as f64 / limit as f64).ceil() as i32;
 
     let offset = (page_number - 1) * limit;
 
-    let posts_array = posts
+    let categories_array = categories
         .into_iter()
         .skip(offset as usize)
         .take(limit as usize)
-        .map(|post| {
-            let mut post_map = object!({
-                "post_id": Value::scalar(post.post_id.to_string()),
-                "title": Value::scalar(post.title),
-                "description": Value::scalar(post.description),
+        .map(|category| {
+            let mut category_map = object!({
+                "name": Value::scalar(category.name),
             });
-            Value::Object(post_map)
+
+            Value::Object(category_map)
         })
         .collect::<Vec<Value>>();
 
@@ -40,12 +39,12 @@ pub async fn pagination_homepage(
     });
 
     let mut context = object!({
-        "posts": Value::Array(posts_array),
+        "categories": Value::Array(categories_array),
         "pagination": Value::Object(pagination),
     });
 
     let html_template =
-        fs::read_to_string("templates/admin.html").expect("Failed to read the file");
+        fs::read_to_string("templates/admin_categories.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
@@ -62,10 +61,10 @@ pub async fn pagination_homepage(
         .body(output))
 }
 
-pub async fn homepage(
+pub async fn admin_category(
     query: web::Query<PaginationQuery>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let posts = database::get_posts().await?;
+    let categories = database::get_categories().await?;
 
     let limit = 3;
 
@@ -73,26 +72,25 @@ pub async fn homepage(
 
     let page = page_number.unwrap_or(1);
 
-    let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
+    let total_pages = (categories.len() as f64 / limit as f64).ceil() as i32;
 
     let offset = (page - 1) * limit;
 
-    let posts_array = posts
+    let categories_array = categories
         .into_iter()
         .skip(offset as usize)
         .take(limit as usize)
-        .map(|post| {
-            let mut post_map = object!({
-                "post_id": Value::scalar(post.post_id.to_string()),
-             "title" : Value::scalar(post.title),
-            "description" : Value::scalar(post.description),
+        .map(|category| {
+            let mut category_map = object!({
+                "name": Value::scalar(category.name),
             });
-            Value::Object(post_map)
+
+            Value::Object(category_map)
         })
         .collect::<Vec<Value>>();
 
     let html_template =
-        fs::read_to_string("templates/admin.html").expect("Failed to read the file");
+        fs::read_to_string("templates/admin_categories.html").expect("Failed to read the file");
 
     let pagination = object!({
         "prev": if page > 1 { Value::scalar(page - 1) } else { Value::Nil },
@@ -102,8 +100,9 @@ pub async fn homepage(
     });
 
     let mut context = object!({
-        "posts":  Value::Array(posts_array),
+        "categories": Value::Array(categories_array),
          "pagination": Value::Object(pagination),
+
     });
 
     let template = liquid::ParserBuilder::with_stdlib()

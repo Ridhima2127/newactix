@@ -231,9 +231,7 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
     }
 }
 
-pub async fn category_posts(
-    path: web::Path<(i32, i32)>,
-) -> Result<HttpResponse> {
+pub async fn category_posts(path: web::Path<(i32, i32)>) -> Result<HttpResponse> {
     let (category_id, page_number) = path.into_inner();
 
     let posts = database::get_posts().await?;
@@ -243,18 +241,12 @@ pub async fn category_posts(
         .filter(|post| post.category_id == category_id as u64)
         .collect();
 
-
     let limit = 3;
     let num_posts_in_category = category_posts.len();
 
-
     let total_pages = (num_posts_in_category as f64 / limit as f64).ceil() as i32;
 
-    let offset = ((page_number- 1) * limit);
-
-
-
-
+    let offset = ((page_number - 1) * limit);
 
     let posts = category_posts
         .into_iter()
@@ -270,7 +262,6 @@ pub async fn category_posts(
         })
         .collect::<Vec<Value>>();
 
-
     let mut context = object!({
     "posts": Value::Array(posts),
     "category_id": Value::scalar(category_id),
@@ -282,7 +273,6 @@ pub async fn category_posts(
     "pages": (1..=total_pages).map(Value::scalar).collect::<Vec<Value>>(),
         }),
         });
-
 
     let html_template =
         fs::read_to_string("templates/post_category.html").expect("Failed to read the file");

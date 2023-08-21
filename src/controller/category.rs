@@ -23,8 +23,7 @@ pub async fn categories_display() -> Result<HttpResponse, actix_web::Error> {
         "categories": Value::Array(categories_array),
     });
 
-    let html_template =
-        fs::read_to_string("../../templates/cat.html").expect("Failed to read the file");
+    let html_template = fs::read_to_string("/templates/cat.html").expect("Failed to read the file");
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()
