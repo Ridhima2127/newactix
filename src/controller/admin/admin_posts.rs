@@ -1,8 +1,11 @@
+#![allow(unused)]
+#![allow(deprecated)]
+
 use crate::controller::posts::{Category, PaginationQuery, Post};
 use crate::model::database;
 use crate::model::database::{get_posts, init_posts};
 use actix_web::http::header;
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpResponse, App};
 use liquid::model::Value;
 use liquid::object;
 use std::sync::{Arc, Mutex};
@@ -21,6 +24,7 @@ pub struct CategoryData {
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
+    pub post_id: u64,
     pub title: String,
     pub description: String,
 }
@@ -235,144 +239,64 @@ pub async fn create_post(
 }
 
 
-pub async fn edit_post(
-    data: web::Data<AppState>,
-    form: web::Form<FormData>,
-) -> Result<HttpResponse, actix_web::Error> {
-
-    let data = data.get_ref();
-
+pub async fn edit_post() -> Result<HttpResponse, actix_web::Error> {
     let html_template =
         fs::read_to_string("templates/edit_post.html").expect("Failed to read the file");
 
-    /*   let post_id_to_edit = form.post_id;
+    let context = liquid::Object::new();
 
-    let mut posts_lock = data.database_post.lock().unwrap();
-    if let Some(post_to_edit) = posts_lock.iter_mut().find(|post| post.post_id == post_id_to_edit) {
-        post_to_edit.title = form.title.clone();
-        post_to_edit.description = form.description.clone();
-    }*/
+    let template = liquid::ParserBuilder::with_stdlib()
+        .build()
+        .unwrap()
+        .parse(&html_template)
+        .expect("Failed to parse template");
 
-    let mut new_post = Post::default();
-    new_post.title = form.title.clone();
-    new_post.description = form.description.clone();
+    let output = template
+        .render(&context)
+        .expect("Failed to render the template");
 
-    let post_id = {
-        let db_lock = data.database_post.lock().unwrap();
-        db_lock.len() + 1
-    };
-    new_post.post_id = post_id as u64;
-
-    match data.database_post.lock() {
-        Ok(mut inner) => {
-            inner.push(new_post);
-        }
-        _ => {}
-    }
-
-    let posts: Vec<Post> = data.database_post.lock().unwrap().clone();
-
-    let template_arc = Arc::new(Mutex::new(html_template));
-
-    let response = {
-        let template_arc_clone = template_arc.clone();
-        let template = template_arc_clone.lock().unwrap().clone();
-
-        let mut context = liquid::Object::new();
-
-        context.insert(
-            "posts".into(),
-            liquid::model::Value::array(
-                posts
-                    .into_iter()
-                    .map(|post| {
-                        let mut post_map = liquid::Object::new();
-                        post_map.insert("title".into(), liquid::model::Value::scalar(post.title));
-                        post_map.insert(
-                            "description".into(),
-                            liquid::model::Value::scalar(post.description),
-                        );
-                        liquid::model::Value::Object(post_map)
-                    })
-                    .collect::<Vec<liquid::model::Value>>(),
-            ),
-        );
-
-        let template_parser = liquid::ParserBuilder::with_stdlib().build().unwrap();
-        let template = template_parser
-            .parse(&template)
-            .expect("Failed to parse template");
-
-        let output = template
-            .render(&context)
-            .expect("Failed to render the template");
-
-        HttpResponse::SeeOther()
-            .append_header((header::LOCATION, "/admin"))
-            .finish()
-    };
-
-    Ok(response)
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(output))
 }
 
-pub async fn edit_post_form(
+
+pub async fn edit_post_by_id(
     data: web::Data<AppState>,
-    post_id: web::Path<u64>, // Assuming the post ID is passed in the URL
-) -> Result<HttpResponse, actix_web::Error> {
-    let data = data.get_ref();
-    let post_id = *post_id;
+    post_id: web::Path<u64>,
+    form: web::Form<Post>,
+) -> HttpResponse {
+    let mut inner_data = data.database_post.lock().unwrap();
 
-    let html_template =
-        fs::read_to_string("templates/edit_post.html").expect("Failed to read the file");
+    if let Some(post) = inner_data.iter_mut().find(|post| post.post_id == *post_id) {
 
-    let posts_lock = data.database_post.lock().unwrap();
+        post.title = form.title.clone();
+        post.description = form.description.clone();
 
-    if let Some(post_to_edit) = posts_lock.iter().find(|post| post.post_id == post_id) {
-        let mut context = liquid::Object::new();
-        context.insert(
-            "post".into(),
-            liquid::model::Value::Object({
-                let mut post_map = liquid::Object::new();
-                post_map.insert(
-                    "title".into(),
-                    liquid::model::Value::scalar(post_to_edit.title.clone()),
-                );
-                post_map.insert(
-                    "description".into(),
-                    liquid::model::Value::scalar(post_to_edit.description.clone()),
-                );
-                post_map
-            }),
-        );
 
-        let template_parser = liquid::ParserBuilder::with_stdlib().build().unwrap();
-        let template = template_parser
-            .parse(&html_template)
-            .expect("Failed to parse template");
-        let output = template
-            .render(&context)
-            .expect("Failed to render the template");
-
-        Ok(HttpResponse::Ok()
-            .content_type("text/html; charset=utf-8")
-            .body(output))
+        HttpResponse::Ok().finish()
     } else {
-        Ok(HttpResponse::NotFound().finish())
+        HttpResponse::NotFound().finish()
     }
 }
 
 
 
-pub(crate) async fn delete_post_by_id(
-    data: web::Data<Mutex<Vec<Post>>>,
+
+
+pub async fn delete_post_by_id(
+    data: web::Data<AppState>,
     post_id: web::Path<u64>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let mut inner_data = data.lock().map_err(|_| actix_web::error::ErrorInternalServerError("Failed to lock mutex"))?;
+    let mut inner_data = data.database_post.lock().unwrap();
 
     if let Some(index) = inner_data.iter().position(|post| post.post_id == *post_id) {
         let deleted_post = inner_data.remove(index);
-        Ok(HttpResponse::Ok().json(Some(deleted_post)))
+        Ok(HttpResponse::Found()
+            .header("Location", "/admin")
+            .finish())
     } else {
         Ok(HttpResponse::NotFound().json(None::<Post>))
     }
 }
+

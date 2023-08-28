@@ -7,7 +7,7 @@ use crate::controller::posts::category_posts;
 use crate::model::database::{init_categories, init_posts};
 use actix_web::{web, App, HttpResponse, HttpServer};
 use std::sync::Mutex;
-use crate::controller::admin::admin_posts::delete_post_by_id;
+use crate::controller::admin::admin_posts::{delete_post_by_id, edit_post_by_id};
 
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
@@ -60,7 +60,8 @@ async fn main() -> std::io::Result<()> {
                         "/page/{page_number}",
                         web::get().to(controller::admin::admin_posts::pagination_homepage),
                     )
-                    .route("/delete/{post_id}", web::delete().to(delete_post_by_id))
+                            .route("/edit/{post_id}", web::get().to(edit_post_by_id))
+                    .route("/delete/{post_id}", web::get().to(delete_post_by_id))
                     .route(
                         "/category",
                         web::get().to(controller::admin::admin_categories::admin_category),
@@ -87,10 +88,6 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         "/create/category",
                         web::post().to(controller::admin::admin_categories::create_category),
-                    )
-                    .route(
-                        "/edit",
-                        web::get().to(controller::admin::admin_posts::edit_post),
                     )
                     .route(
                         "/posts/post_id/delete",
