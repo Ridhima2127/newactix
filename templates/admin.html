@@ -38,7 +38,7 @@
 <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-        <a href="/index.html" class="logo d-flex align-items-center">
+        <a href="/admin" class="logo d-flex align-items-center">
             <img src="/assets/img/logo.png" alt="">
             <span class="d-none d-lg-block">Journey</span>
         </a>
@@ -88,7 +88,7 @@
 
 
         <li class="nav-item">
-            <a class="nav-link" href="admin-posts.html">
+            <a class="nav-link" href="/admin">
                 <i class="bi bi-envelope"></i>
                 <span>Posts</span>
             </a>
@@ -147,13 +147,13 @@
                             <tbody>
                             {% for post in posts %}
                             <tr>
-                                <td>{{ forloop.index }}</td>
+                                <td>{{ post.post_id }}</td>
                                 <td>{{ post.title }}</td>
                                 <td>{{ post.description }}</td>
                                 <td>
 
-                                    <button type="button" class="btn btn-success" onclick="window.location.href='edit_post.html'">Edit</button>
-                                    <button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button>
+                                    <button type="button" class="btn btn-success" onclick="window.location.href='/admin/edit'">Edit</button>
+                                    <button type="button" class="btn btn-danger" onclick="window.location.href='/admin/delete/{{ post.post_id }}'">Delete</button>
                                 </td>
                             </tr>
                             {% endfor %}

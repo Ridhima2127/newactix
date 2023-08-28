@@ -28,7 +28,7 @@ pub async fn login_user(form: web::Form<User>) -> Result<HttpResponse, actix_web
     if let Some(user) = get_user_by_username(&username).await {
         if user.password == password {
             Ok(HttpResponse::SeeOther()
-                .append_header((header::LOCATION, "/admin/"))
+                .append_header((header::LOCATION, "/admin"))
                 .finish())
         } else {
             Ok(HttpResponse::Unauthorized().body("Incorrect password"))

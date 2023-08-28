@@ -4,8 +4,10 @@ mod controller;
 mod model;
 
 use crate::controller::posts::category_posts;
+use crate::model::database::{init_categories, init_posts};
 use actix_web::{web, App, HttpResponse, HttpServer};
-
+use std::sync::Mutex;
+use crate::controller::admin::admin_posts::delete_post_by_id;
 
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
@@ -13,7 +15,14 @@ async fn _todo() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let v = init_posts().await.unwrap();
+    let v1 = init_categories().await.unwrap();
+    let data = web::Data::new(controller::admin::admin_posts::AppState {
+        database_post: Mutex::new(v.clone()),
+        database_category: Mutex::new(v1.clone()),
+    });
+
+    HttpServer::new(move || {
         App::new()
             .service(web::resource("/").to(controller::posts::index))
             .service(
@@ -46,11 +55,12 @@ async fn main() -> std::io::Result<()> {
             .service(actix_files::Files::new("/assets", "assets/").show_files_listing())
             .service(
                 web::scope("/admin")
-                    .route("/", web::get().to(controller::admin::admin_posts::homepage))
+                    .route("", web::get().to(controller::admin::admin_posts::homepage))
                     .route(
                         "/page/{page_number}",
                         web::get().to(controller::admin::admin_posts::pagination_homepage),
                     )
+                    .route("/delete/{post_id}", web::delete().to(delete_post_by_id))
                     .route(
                         "/category",
                         web::get().to(controller::admin::admin_categories::admin_category),
@@ -60,19 +70,34 @@ async fn main() -> std::io::Result<()> {
                         web::get()
                             .to(controller::admin::admin_categories::admin_category_pagination),
                     )
-                    .route("/new", web::get().to(controller::admin::new_post::new_post))
-
-
-                    .route("/page/{page_number}", web::get().to(_todo))
                     .route(
-                        "/posts/{post_id}/edit",
-                        web::get().to(controller::posts::edit_post),
+                        "/new",
+                        web::get().to(controller::admin::admin_posts::new_post),
                     )
-
+                    .app_data(data.clone())
+                    .route(
+                        "/create",
+                        web::post().to(controller::admin::admin_posts::create_post),
+                    )
+                    .route(
+                        "/new/category",
+                        web::get().to(controller::admin::admin_categories::new_category),
+                    )
+                    .app_data(data.clone())
+                    .route(
+                        "/create/category",
+                        web::post().to(controller::admin::admin_categories::create_category),
+                    )
+                    .route(
+                        "/edit",
+                        web::get().to(controller::admin::admin_posts::edit_post),
+                    )
                     .route(
                         "/posts/post_id/delete",
                         web::get().to(controller::posts::delete_post),
                     )
+
+
                     .route("/categories", web::get().to(controller::posts::index))
                     .route("/categories/page/{page_number}", web::get().to(_todo))
                     .route(

@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Post {
     pub post_id: u64,
     pub title: String,
@@ -18,7 +18,7 @@ pub struct Post {
     pub category_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Category {
     pub id: u64,
     pub name: String,
@@ -35,9 +35,9 @@ pub async fn pagination_index(
 ) -> Result<HttpResponse, actix_web::Error> {
     let page_number = *page_number;
 
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
-    let categories = database::get_categories().await?;
+    let categories = database::init_categories().await?;
 
     let mut category_post_counts = vec![0; categories.len()];
     for (i, category) in categories.iter().enumerate() {
@@ -113,9 +113,9 @@ pub async fn pagination_index(
 }
 
 pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, actix_web::Error> {
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
-    let categories = database::get_categories().await?;
+    let categories = database::init_categories().await?;
 
     let mut category_post_counts = vec![0; categories.len()];
     for (i, category) in categories.iter().enumerate() {
@@ -234,7 +234,7 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
 pub async fn category_posts(path: web::Path<(i32, i32)>) -> Result<HttpResponse> {
     let (category_id, page_number) = path.into_inner();
 
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
     let category_posts: Vec<Post> = posts
         .into_iter()
@@ -276,29 +276,6 @@ pub async fn category_posts(path: web::Path<(i32, i32)>) -> Result<HttpResponse>
 
     let html_template =
         fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}
-
-
-
-pub async fn edit_post() -> Result<HttpResponse, actix_web::Error> {
-    let html_template =
-        fs::read_to_string("templates/edit_post.html").expect("Failed to read the file");
-
-    let context = liquid::Object::new();
 
     let template = liquid::ParserBuilder::with_stdlib()
         .build()

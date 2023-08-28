@@ -35,7 +35,7 @@
     <header id="header" class="header fixed-top d-flex align-items-center">
 
         <div class="d-flex align-items-center justify-content-between">
-            <a href="/admin/" class="logo d-flex align-items-center">
+            <a href="/admin" class="logo d-flex align-items-center">
                 <img src="/assets/img/logo.png" alt="">
                 <span class="d-none d-lg-block">Journey</span>
             </a>
@@ -45,7 +45,7 @@
             <ul class="d-flex align-items-center">
                 <li class="nav-item dropdown pe-3">
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-                        <img src="assets/img/messages-1.jpg" alt="Profile" class="rounded-circle">
+                        <img src="/assets/img/messages-1.jpg" alt="Profile" class="rounded-circle">
                         <span class="d-none d-md-block dropdown-toggle ps-2">User</span>
                     </a><!-- End Profile Iamge Icon -->
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
@@ -72,7 +72,7 @@
     <aside id="sidebar" class="sidebar">
         <ul class="sidebar-nav" id="sidebar-nav">
             <li class="nav-item">
-                <a class="nav-link" href="/admin/">
+                <a class="nav-link" href="/admin">
                     <i class="bi bi-envelope"></i>
                     <span>Posts</span>
                 </a>
@@ -107,14 +107,14 @@
                         <div class="card-body">
                             <br>
                             <!-- Vertical Form -->
-                            <form class="row g-3">
+                            <form class="row g-3" action="/admin/create" method="post">
                                 <div class="col-12">
                                     <label for="inputNanme4" class="form-label">Title</label>
-                                    <input type="text" class="form-control" id="inputNanme4" placeholder="Title">
+                                    <input type="text"  name="title"  class="form-control" id="inputNanme4" placeholder="Title">
                                 </div>
                                 <div class="col-12">
                                     <label for="inputEmail4" class="form-label">Description</label>
-                                    <input type="email" class="form-control" id="inputEmail4" placeholder="Description">
+                                    <input type="text"  name="description" class="form-control" id="inputEmail4" placeholder="Description">
                                 </div>
 
                                 <div class="" style="display: flex;justify-content: flex-end;">

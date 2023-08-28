@@ -5,41 +5,6 @@ use liquid::model::Value;
 use liquid::object;
 use std::fs;
 
-pub async fn categories_display() -> Result<HttpResponse, actix_web::Error> {
-    let categories = database::get_categories().await?;
-
-    let categories_array = categories
-        .into_iter()
-        .map(|category| {
-            let mut category_map = object!({
-                "name": Value::scalar(category.name),
-            });
-
-            Value::Object(category_map)
-        })
-        .collect::<Vec<Value>>();
-
-    let mut context = object!({
-        "categories": Value::Array(categories_array),
-    });
-
-    let html_template = fs::read_to_string("/templates/cat.html").expect("Failed to read the file");
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}
-
 pub async fn new_category() -> Result<HttpResponse, actix_web::Error> {
     // TODO: Implement the logic to connect to database render the 'new_category.html.liquid' template.
 

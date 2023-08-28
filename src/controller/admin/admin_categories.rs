@@ -1,16 +1,21 @@
-use crate::controller::posts::PaginationQuery;
+use crate::controller::admin::admin_posts::{AppState, CategoryData};
+use crate::controller::posts::{Category, PaginationQuery};
 use crate::model::database;
+use crate::model::database::get_categories;
+use actix_web::http::header;
 use actix_web::{web, HttpResponse};
 use liquid::model::Value;
 use liquid::object;
 use std::fs;
+use std::sync::{Arc, Mutex};
 
 pub async fn admin_category_pagination(
     page_number: web::Path<i32>,
+    data: web::Data<AppState>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let page_number = *page_number;
 
-    let categories = database::get_categories().await?;
+    let categories = get_categories(&data.get_ref().database_category).await?;
 
     let limit = 3;
 
@@ -64,8 +69,9 @@ pub async fn admin_category_pagination(
 
 pub async fn admin_category(
     query: web::Query<PaginationQuery>,
+    data: web::Data<AppState>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let categories = database::get_categories().await?;
+    let categories = get_categories(&data.get_ref().database_category).await?;
 
     let limit = 3;
 
@@ -120,4 +126,92 @@ pub async fn admin_category(
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(output))
+}
+
+pub async fn new_category() -> Result<HttpResponse, actix_web::Error> {
+    let html_template =
+        fs::read_to_string("templates/new_category.html").expect("Failed to read the file");
+
+    let context = liquid::Object::new();
+
+    let template = liquid::ParserBuilder::with_stdlib()
+        .build()
+        .unwrap()
+        .parse(&html_template)
+        .expect("Failed to parse template");
+
+    let output = template
+        .render(&context)
+        .expect("Failed to render the template");
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(output))
+}
+
+pub async fn create_category(
+    data: web::Data<AppState>,
+    form: web::Form<CategoryData>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let html_template =
+        fs::read_to_string("templates/new_category.html").expect("Failed to read the file");
+
+    let data = data.get_ref();
+
+    let mut new_category = Category::default();
+    new_category.name = form.name.clone();
+
+    let id = {
+        let db_lock = data.database_category.lock().unwrap();
+        db_lock.len() + 1
+    };
+    new_category.id = id as u64;
+
+    match data.database_category.lock() {
+        Ok(mut inner) => {
+            inner.push(new_category);
+        }
+        _ => {}
+    }
+
+    let categories: Vec<Category> = data.database_category.lock().unwrap().clone();
+
+    let template_arc = Arc::new(Mutex::new(html_template));
+
+    let response = {
+        let template_arc_clone = template_arc.clone();
+        let template = template_arc_clone.lock().unwrap().clone();
+
+        let mut context = liquid::Object::new();
+
+        context.insert(
+            "categories".into(),
+            liquid::model::Value::array(
+                categories
+                    .into_iter()
+                    .map(|category| {
+                        let mut category_map = liquid::Object::new();
+                        category_map
+                            .insert("name".into(), liquid::model::Value::scalar(category.name));
+                        liquid::model::Value::Object(category_map)
+                    })
+                    .collect::<Vec<liquid::model::Value>>(),
+            ),
+        );
+
+        let template_parser = liquid::ParserBuilder::with_stdlib().build().unwrap();
+        let template = template_parser
+            .parse(&template)
+            .expect("Failed to parse template");
+
+        let output = template
+            .render(&context)
+            .expect("Failed to render the template");
+
+        HttpResponse::SeeOther()
+            .append_header((header::LOCATION, "/admin/category"))
+            .finish()
+    };
+
+    Ok(response)
 }
