@@ -4,13 +4,13 @@
 use crate::controller::posts::{Category, PaginationQuery, Post};
 use crate::model::database;
 use crate::model::database::{get_posts, init_posts};
+use actix_web::guard::Post;
 use actix_web::http::header;
-use actix_web::{web, HttpResponse, App};
+use actix_web::{web, App, HttpResponse};
 use liquid::model::Value;
 use liquid::object;
 use std::sync::{Arc, Mutex};
 use std::{fs, thread};
-use actix_web::guard::Post;
 
 pub struct AppState {
     pub database_post: Mutex<Vec<Post>>,
@@ -25,6 +25,12 @@ pub struct CategoryData {
 #[derive(serde::Deserialize)]
 pub struct FormData {
     pub post_id: u64,
+    pub title: String,
+    pub description: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct PostUpdateForm {
     pub title: String,
     pub description: String,
 }
@@ -239,7 +245,8 @@ pub async fn create_post(
 }
 
 
-pub async fn edit_post() -> Result<HttpResponse, actix_web::Error> {
+
+pub async fn edit_post_html() -> Result<HttpResponse, actix_web::Error> {
     let html_template =
         fs::read_to_string("templates/edit_post.html").expect("Failed to read the file");
 
@@ -261,11 +268,38 @@ pub async fn edit_post() -> Result<HttpResponse, actix_web::Error> {
 }
 
 
-pub async fn edit_post_by_id(
+/*pub async fn edit_post(
+    data: web::Data<AppState>,
+    post_id: web::Path<u64>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let post_id_value = post_id.into_inner();
+
+    let post_index = data
+        .database_post
+        .lock()
+        .unwrap()
+        .iter()
+        .position(|post| post.post_id == post_id_value);
+
+    if let Some(index) = post_index {
+        let new_description = "Updated description".to_string();
+        let mut posts = data.database_post.lock().unwrap();
+        posts[index].description = new_description.clone();
+
+
+        Ok(HttpResponse::SeeOther()
+            .append_header((header::LOCATION, "/admin"))
+            .finish())
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
+}
+*/
+pub async fn edit_post(
     data: web::Data<AppState>,
     post_id: web::Path<u64>,
     form: web::Form<Post>,
-) -> HttpResponse {
+) ->  Result<HttpResponse, actix_web::Error> {
     let mut inner_data = data.database_post.lock().unwrap();
 
     if let Some(post) = inner_data.iter_mut().find(|post| post.post_id == *post_id) {
@@ -274,15 +308,14 @@ pub async fn edit_post_by_id(
         post.description = form.description.clone();
 
 
-        HttpResponse::Ok().finish()
+        Ok(HttpResponse::SeeOther()
+            .append_header((header::LOCATION, format!("/admin/update/{}", post.post_id)))
+            .finish())
+
     } else {
-        HttpResponse::NotFound().finish()
+        Ok(HttpResponse::NotFound().finish())
     }
 }
-
-
-
-
 
 pub async fn delete_post_by_id(
     data: web::Data<AppState>,
@@ -292,11 +325,8 @@ pub async fn delete_post_by_id(
 
     if let Some(index) = inner_data.iter().position(|post| post.post_id == *post_id) {
         let deleted_post = inner_data.remove(index);
-        Ok(HttpResponse::Found()
-            .header("Location", "/admin")
-            .finish())
+        Ok(HttpResponse::Found().header("Location", "/admin").finish())
     } else {
         Ok(HttpResponse::NotFound().json(None::<Post>))
     }
 }
-

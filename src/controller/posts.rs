@@ -312,21 +312,3 @@ pub async fn update_post() -> Result<HttpResponse, actix_web::Error> {
         .content_type("text/html; charset=utf-8")
         .body(output))
 }
-
-pub async fn delete_post() -> Result<HttpResponse, actix_web::Error> {
-    // TODO: Implement the logic to connect to database and render the 'delete_post.html.liquid' template.
-
-    /*
-      todo!()
-      let template_str = include_str!("templates/delete_post.html.liquid");
-
-        let template = liquid::Parser::parse(template_str)
-            .map_err(|e| error::ErrorInternalServerError(format!("Failed to parse template: {}", e)))?;
-
-        let html = template.render(&liquid::Context::new())
-            .map_err(|e| error::ErrorInternalServerError(format!("Failed to render template: {}", e)))?;
-    */
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(()))
-}

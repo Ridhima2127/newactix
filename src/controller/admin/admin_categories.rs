@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::controller::admin::admin_posts::{AppState, CategoryData};
 use crate::controller::posts::{Category, PaginationQuery};
 use crate::model::database;
@@ -7,6 +9,7 @@ use actix_web::{web, HttpResponse};
 use liquid::model::Value;
 use liquid::object;
 use std::fs;
+use std::process::id;
 use std::sync::{Arc, Mutex};
 
 pub async fn admin_category_pagination(
@@ -214,4 +217,20 @@ pub async fn create_category(
     };
 
     Ok(response)
+}
+
+pub async fn delete_category_by_id(
+    data: web::Data<AppState>,
+    id: web::Path<u64>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let mut inner_data = data.database_category.lock().unwrap();
+
+    if let Some(index) = inner_data.iter().position(|category| category.id == *id) {
+        let deleted_category = inner_data.remove(index);
+        Ok(HttpResponse::Found()
+            .header("Location", "/admin/category")
+            .finish())
+    } else {
+        Ok(HttpResponse::NotFound().json(None::<Category>))
+    }
 }

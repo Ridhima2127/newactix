@@ -155,7 +155,7 @@
                                 <td>
                                     <button type="button" class="btn btn-success" onclick="window.location.href='/admin/edit'">Edit</button>
                                     &nbsp;&nbsp;
-                                    <button type="button" class="btn btn-danger" onclick="deleteConfirmation()">Delete</button>
+                                    <button type="button" onclick="confirmDelete({{ category.id }})" class="btn btn-danger">Delete</button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -209,14 +209,12 @@
 <script src="/assets/js/main.js"></script>
 
 <script>
-        function deleteConfirmation() {
-            if (window.confirm("Are you sure you want to delete?")) {
-                alert("Item deleted successfully!");
-            } else {
-                alert("Deletion canceled!");
-            }
+    function confirmDelete(categoryId) {
+        if (confirm("Are you sure you want to delete this category?")) {
+            window.location.href = `/admin/delete/category/${categoryId}`;
         }
-    </script>
+    }
+</script>
 
 </body>
 
