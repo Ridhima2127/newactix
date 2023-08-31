@@ -1,3 +1,3 @@
 pub mod admin;
-pub mod login;
+pub mod authentication;
 pub mod posts;

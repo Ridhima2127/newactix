@@ -153,7 +153,7 @@
                                 <th scope="row">{{ category.id }}</th>
                                 <td>{{ category.name }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-success" onclick="window.location.href='/admin/edit'">Edit</button>
+                                    <button type="button" class="btn btn-success" onclick="window.location.href='/admin/category/edit/{{ category.id }}'">Edit</button>
                                     &nbsp;&nbsp;
                                     <button type="button" onclick="confirmDelete({{ category.id }})" class="btn btn-danger">Delete</button>
                                 </td>

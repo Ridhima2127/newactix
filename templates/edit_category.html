@@ -72,14 +72,14 @@
 <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
         <li class="nav-item">
-            <a class="nav-link" href="/admin">
+            <a class="nav-link collapsed" href="/admin">
                 <i class="bi bi-envelope"></i>
                 <span>Posts</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link collapsed" href="/admin/category">
+            <a class="nav-link " href="/admin/category">
                 <i class="bi bi-card-list"></i>
                 <span>Categories</span>
             </a>
@@ -107,24 +107,20 @@
                     <div class="card-body">
                         <br>
                         <!-- Vertical Form -->
-                        <form method="POST" action="/admin/update/{{ post.post_id }}">
+                        <form method="POST" action="/admin/category/update/{{ category.id }}">
 
                             <div class="col-12">
 
-                                <input type="text"  name= "post_id" class="form-control" id="inputid" placeholder="Title" value="{{ post.post_id }}" required hidden><br>
+                                <input type="text"  name= "category_id" class="form-control" id="inputid" placeholder="id" value="{{ category.id }}" required hidden><br>
                             </div>
 
                             <div class="col-12">
-                            <label for="inputNanme4" class="form-label">Title</label>
-                            <input type="text" class="form-control" name= "title" id="inputNanme4" placeholder="Title" value="{{ post.title }}" required><br>
-                        </div>
-                            <div class="col-12">
-                                <label for="inputEmail4" class="form-label">Description</label>
-                                <input type="text" class="form-control"  name= "description" id="inputEmail4" placeholder="Description" value="{{ post.description }}">
+                                <label for="inputNanme4" class="form-label">Name</label>
+                                <input type="text" class="form-control" name= "name" id="inputNanme4" placeholder="name" value="{{ category.name }}" required><br>
                             </div>
 
 
-<br>
+                            <br>
                             <div class="" style="display: flex;justify-content: flex-end;">
                                 <button type="submit" class="btn btn-primary" >Update</button> &nbsp
                             </div>

@@ -40,19 +40,29 @@ pub async fn login_user(form: web::Form<User>) -> Result<HttpResponse, actix_web
 
 pub async fn login() -> Result<HttpResponse> {
     let html_template =
-        fs::read_to_string("templates/login.html").map_err(|e| ErrorInternalServerError(e))?;
+        fs::read_to_string("templates/login.html").map_err(ErrorInternalServerError)?;
 
     let context = liquid::Object::new();
 
-    let template = liquid::ParserBuilder::with_stdlib()
+    let template_parser = liquid::ParserBuilder::with_stdlib()
         .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
+        .map_err(|err| {
+            eprintln!("Failed to build parser: {}", err);
+            actix_web::error::ErrorInternalServerError(format!("Failed to build parser: {}", err))
+        })?;
 
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let template = template_parser.parse(&html_template).map_err(|err| {
+        eprintln!("Failed to parse template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+    })?;
+
+    let output = template.render(&context).map_err(|err| {
+        eprintln!("Failed to render the template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to render the template: {}",
+            err
+        ))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")

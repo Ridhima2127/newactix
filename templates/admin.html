@@ -151,7 +151,7 @@
                                 <td>{{ post.title }}</td>
                                 <td>{{ post.description }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-success" onclick="window.location.href='/admin/edit'">Edit</button>
+                                    <button type="button" class="btn btn-success" onclick="window.location.href='/admin/edit/{{ post.post_id }}'">Edit</button>
                                     <button type="button" onclick="confirmDelete({{ post.post_id }})" class="btn btn-danger">Delete</button>
                             </tr>
                             {% endfor %}
