@@ -16,8 +16,21 @@ async fn _todo() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let v = init_posts().await.unwrap();
-    let v1 = init_categories().await.unwrap();
+    let v = match init_posts().await {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("Error initializing posts: {:?}", err);
+            Vec::new()
+        }
+    };
+
+    let v1 = match init_categories().await {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("Error initializing categories: {:?}", err);
+            Vec::new()
+        }
+    };
     let data = web::Data::new(controller::admin::admin_posts::AppState {
         database_post: Mutex::new(v.clone()),
         database_category: Mutex::new(v1.clone()),

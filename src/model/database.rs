@@ -4,7 +4,14 @@ use actix_web::{web, HttpResponse};
 use std::sync::{Arc, Mutex};
 
 pub(crate) async fn get_posts(data: &Mutex<Vec<Post>>) -> Result<Vec<Post>, actix_web::Error> {
-    let inner_data = data.lock().unwrap().clone();
+    let inner_data = match data.lock() {
+        Ok(guard) => guard.clone(),
+        Err(err) => {
+            eprintln!("Error acquiring lock: {:?}", err);
+            return Err(actix_web::error::ErrorInternalServerError("Failed to acquire lock"));
+        }
+    };
+
     Ok(inner_data)
 }
 
@@ -70,10 +77,16 @@ pub(crate) async fn init_posts() -> Result<Vec<Post>, actix_web::Error> {
 pub(crate) async fn get_categories(
     data: &Mutex<Vec<Category>>,
 ) -> Result<Vec<Category>, actix_web::Error> {
-    let inner_data = data.lock().unwrap().clone();
+    let inner_data = match data.lock() {
+        Ok(guard) => guard.clone(),
+        Err(err) => {
+            eprintln!("Error acquiring lock: {:?}", err);
+            return Err(actix_web::error::ErrorInternalServerError("Failed to acquire lock"));
+        }
+    };
+
     Ok(inner_data)
 }
-
 pub(crate) async fn init_categories() -> Result<Vec<Category>, actix_web::Error> {
     let categories = vec![
         Category {

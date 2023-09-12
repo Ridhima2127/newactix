@@ -16,11 +16,14 @@ pub struct User {
 }
 
 pub async fn get_user_by_username(username: &str) -> Option<User> {
-    let users = get_users().await.unwrap_or_else(|_| vec![]);
-
-    users.iter().find(|user| user.username == username).cloned()
+    match get_users().await {
+        Ok(users) => users.iter().find(|user| user.username == username).cloned(),
+        Err(_) => {
+            eprintln!("Error retrieving users");
+            None
+        }
+    }
 }
-
 pub async fn login_user(form: web::Form<User>) -> Result<HttpResponse, actix_web::Error> {
     let username = form.username.clone();
     let password = form.password.clone();

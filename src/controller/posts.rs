@@ -1,3 +1,5 @@
+#![allow(clippy::manual_unwrap_or)]
+
 use crate::model::database;
 use actix_web::error::ErrorInternalServerError;
 use actix_web::{error, web, App, HttpResponse, HttpServer, ResponseError, Result};

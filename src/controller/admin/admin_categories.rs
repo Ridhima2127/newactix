@@ -1,4 +1,5 @@
 #![allow(deprecated)]
+#![allow(clippy::manual_unwrap_or)]
 
 use crate::controller::admin::admin_posts::{AppState, CategoryData};
 use crate::controller::posts::{Category, EditCategory, PaginationQuery};
@@ -215,8 +216,7 @@ pub async fn create_category(
     let template_arc = Arc::new(Mutex::new(html_template));
 
     let response = {
-        let template_arc_clone = template_arc.clone();
-        let template = template_arc_clone
+        let template = template_arc
             .lock()
             .map_err(|err| {
                 eprintln!("Failed to acquire template lock: {}", err);
