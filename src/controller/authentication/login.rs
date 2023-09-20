@@ -1,6 +1,7 @@
+use std::fmt::{Display, Formatter};
 use crate::model::users::get_users;
 use actix_web::http::header;
-use actix_web::{error::ErrorInternalServerError, get, HttpResponse, Result};
+use actix_web::{error::ErrorInternalServerError, get, HttpResponse, ResponseError, Result};
 use actix_web::{web, FromRequest, HttpRequest, Responder};
 use liquid::model::Value;
 use liquid::ParserBuilder;
@@ -9,11 +10,35 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fs;
 use thiserror::Error;
+use uuid::Uuid;
+use secrecy::{ExposeSecret, Secret};
+use sqlx::PgPool;
+use argon2::Argon2;
+use argon2::PasswordVerifier;
+use anyhow::Context;
+use tokio::task::JoinHandle;
+use argon2::PasswordHash;
+use anyhow::Error;
+
+
 
 #[derive(Deserialize, Clone)]
 pub struct User {
     pub(crate) username: String,
     pub(crate) password: String,
+}
+
+
+#[derive(Debug, Error)]
+pub enum CustomError {
+    #[error("Custom error message")]
+    MyCustomError,
+}
+
+impl ResponseError for CustomError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::InternalServerError().body(format!("Custom error: {}", self))
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -24,11 +49,28 @@ pub enum AuthError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
-/*pub struct Credentials {
+pub struct Credentials {
     pub username: String,
     pub password: Secret<String>,
 }
-*/
+
+#[tracing::instrument(name = "Get stored credentials", skip(username))]
+async fn get_stored_credentials(
+    username: &str,
+) -> Result<Option<(String, Secret<String>)>, CustomError> {
+    match get_users().await {
+        Ok(users) => {
+            if let Some(user) = users.iter().find(|u| u.username == username) {
+                let password_secret = Secret::new(user.password.clone());
+                Ok(Some((Uuid::new_v4().to_string(), password_secret)))
+            } else {
+                Ok(None)
+            }
+        }
+        Err(_) => Err(CustomError::MyCustomError), // Handle the error as needed
+    }
+}
+
 pub async fn get_user_by_username(username: &str) -> Option<User> {
     match get_users().await {
         Ok(users) => users.iter().find(|user| user.username == username).cloned(),
@@ -86,11 +128,40 @@ pub async fn login() -> Result<HttpResponse> {
         .body(output))
 }
 
-/*#[tracing::instrument(name = "Validate credentials", skip(credentials, pool))]
+#[tracing::instrument(
+name = "Validate credentials",
+skip(expected_password_hash, password_candidate)
+)]
+fn verify_password_hash(
+    expected_password_hash: Secret<String>,
+    password_candidate: Secret<String>,
+) -> Result<(), AuthError> {
+    let expected_password_hash = PasswordHash::new(expected_password_hash.expose_secret())
+        .context("Failed to parse hash in PHC string format.")?;
+
+    Argon2::default()
+        .verify_password(
+            password_candidate.expose_secret().as_bytes(),
+            &expected_password_hash,
+        )
+        .context("Invalid password.")
+        .map_err(AuthError::InvalidCredentials)
+}
+
+pub fn spawn_blocking_with_tracing<F, R>(f: F) -> JoinHandle<R>
+    where
+        F: FnOnce() -> R + Send + 'static,
+        R: Send + 'static,
+{
+    let current_span = tracing::Span::current();
+    actix_web::rt::task::spawn_blocking(move || current_span.in_scope(f))
+}
+
+#[tracing::instrument(name = "Validate credentials", skip(credentials, pool))]
 pub async fn validate_credentials(
     credentials: Credentials,
     pool: &PgPool,
-) -> Result<uuid::Uuid, AuthError> {
+) -> std::result::Result<String, AuthError> {
     let mut user_id = None;
     let mut expected_password_hash = Secret::new(
         "$argon2id$v=19$m=15000,t=2,p=1$\
@@ -99,7 +170,7 @@ pub async fn validate_credentials(
             .to_string(),
     );
     if let Some((stored_user_id, stored_password_hash)) =
-        get_stored_credentials(&credentials.username, pool).await?
+        get_stored_credentials(&credentials.username).await?
     {
         user_id = Some(stored_user_id);
         expected_password_hash = stored_password_hash;
@@ -114,4 +185,4 @@ pub async fn validate_credentials(
     user_id
         .ok_or_else(|| anyhow::anyhow!("Unknown username."))
         .map_err(AuthError::InvalidCredentials)
-}*/
+}
