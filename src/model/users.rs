@@ -1,4 +1,5 @@
-use crate::controller::login::login::User;
+use crate::controller::authentication::login::User;
+
 
 pub(crate) async fn get_users() -> Result<Vec<User>, actix_web::Error> {
     let users = vec![

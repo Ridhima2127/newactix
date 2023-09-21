@@ -1,7 +1,21 @@
+use crate::controller::admin::admin_posts::{AppState, FormData};
 use crate::controller::posts::{Category, Post};
-use actix_web::HttpResponse;
+use actix_web::{web, HttpResponse};
+use std::sync::{Arc, Mutex};
 
-pub(crate) async fn get_posts() -> Result<Vec<Post>, actix_web::Error> {
+pub(crate) async fn get_posts(data: &Mutex<Vec<Post>>) -> Result<Vec<Post>, actix_web::Error> {
+    let inner_data = match data.lock() {
+        Ok(guard) => guard.clone(),
+        Err(err) => {
+            eprintln!("Error acquiring lock: {:?}", err);
+            return Err(actix_web::error::ErrorInternalServerError("Failed to acquire lock"));
+        }
+    };
+
+    Ok(inner_data)
+}
+
+pub(crate) async fn init_posts() -> Result<Vec<Post>, actix_web::Error> {
     let posts = vec![
         Post {
             post_id: 1,
@@ -36,23 +50,21 @@ pub(crate) async fn get_posts() -> Result<Vec<Post>, actix_web::Error> {
         Post {
             post_id: 5,
             title: "Fifth Post".to_string(),
-            description: "Be so happy that, when other people look at you, they become happy too."
-                .to_string(),
+            description: "You only live once, but if you do it right, once is enough.".to_string(),
             category: "Life".to_string(),
             category_id: 2,
         },
         Post {
             post_id: 6,
             title: "Sixth Post".to_string(),
-            description: "Be so happy that, when other people look at you, they become happy too."
-                .to_string(),
+            description: "In order to write about life first you must live it.".to_string(),
             category: "Life".to_string(),
             category_id: 2,
         },
         Post {
             post_id: 7,
             title: "Seventh Post".to_string(),
-            description: "Be so happy that, when other people look at you, they become happy too."
+            description: "Life is not a problem to be solved, but a reality to be experienced."
                 .to_string(),
             category: "Life".to_string(),
             category_id: 2,
@@ -62,7 +74,20 @@ pub(crate) async fn get_posts() -> Result<Vec<Post>, actix_web::Error> {
     Ok(posts)
 }
 
-pub(crate) async fn get_categories() -> Result<Vec<Category>, actix_web::Error> {
+pub(crate) async fn get_categories(
+    data: &Mutex<Vec<Category>>,
+) -> Result<Vec<Category>, actix_web::Error> {
+    let inner_data = match data.lock() {
+        Ok(guard) => guard.clone(),
+        Err(err) => {
+            eprintln!("Error acquiring lock: {:?}", err);
+            return Err(actix_web::error::ErrorInternalServerError("Failed to acquire lock"));
+        }
+    };
+
+    Ok(inner_data)
+}
+pub(crate) async fn init_categories() -> Result<Vec<Category>, actix_web::Error> {
     let categories = vec![
         Category {
             id: 1,
@@ -126,3 +151,4 @@ pub async fn get_specific_post() -> Result<Vec<Post>, actix_web::Error> {
 
     Ok(posts)
 }
+/*fn help(//app state - reference of mutex)-> {... modify in this}*/

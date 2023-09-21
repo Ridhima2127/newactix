@@ -3,9 +3,12 @@
 mod controller;
 mod model;
 
+use crate::controller::admin::admin_categories::delete_category_by_id;
+use crate::controller::admin::admin_posts::{delete_post_by_id, edit_post};
 use crate::controller::posts::category_posts;
+use crate::model::database::{init_categories, init_posts};
 use actix_web::{web, App, HttpResponse, HttpServer};
-
+use std::sync::Mutex;
 
 async fn _todo() -> HttpResponse {
     HttpResponse::Ok().body("TODO")
@@ -13,7 +16,27 @@ async fn _todo() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let v = match init_posts().await {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("Error initializing posts: {:?}", err);
+            Vec::new()
+        }
+    };
+
+    let v1 = match init_categories().await {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("Error initializing categories: {:?}", err);
+            Vec::new()
+        }
+    };
+    let data = web::Data::new(controller::admin::admin_posts::AppState {
+        database_post: Mutex::new(v.clone()),
+        database_category: Mutex::new(v1.clone()),
+    });
+
+    HttpServer::new(move || {
         App::new()
             .service(web::resource("/").to(controller::posts::index))
             .service(
@@ -37,19 +60,37 @@ async fn main() -> std::io::Result<()> {
                         web::get().to(controller::posts::category_posts),
                     ),
             )
-            .service(web::resource("/login").route(web::get().to(controller::login::login::login)))
+            .service(
+                web::resource("/login")
+                    .route(web::get().to(controller::authentication::login::login)),
+            )
             .service(
                 web::resource("/login_user")
-                    .route(web::post().to(controller::login::login::login_user)),
+                    .route(web::post().to(controller::authentication::login::login_user)),
             )
             .service(web::resource("/logout").to(_todo))
             .service(actix_files::Files::new("/assets", "assets/").show_files_listing())
             .service(
                 web::scope("/admin")
-                    .route("/", web::get().to(controller::admin::admin_posts::homepage))
+                    .route("", web::get().to(controller::admin::admin_posts::homepage))
                     .route(
                         "/page/{page_number}",
                         web::get().to(controller::admin::admin_posts::pagination_homepage),
+                    )
+                    /*.route("/edit/{post_id}", web::get().to(edit_post_by_id))*/
+                    .route(
+                        "/edit/{post_id}",
+                        web::get().to(controller::admin::admin_posts::edit_post_html),
+                    )
+                    .app_data(data.clone())
+                    .route(
+                        "/update/{post_id}",
+                        web::post().to(controller::admin::admin_posts::edit_post),
+                    )
+                    .route("/delete/{post_id}", web::get().to(delete_post_by_id))
+                    .route(
+                        "/delete/category/{category_id}",
+                        web::get().to(delete_category_by_id),
                     )
                     .route(
                         "/category",
@@ -60,33 +101,35 @@ async fn main() -> std::io::Result<()> {
                         web::get()
                             .to(controller::admin::admin_categories::admin_category_pagination),
                     )
-                    .route("/new", web::get().to(controller::admin::new_post::new_post))
-
-
-                    .route("/page/{page_number}", web::get().to(_todo))
                     .route(
-                        "/posts/{post_id}/edit",
-                        web::get().to(controller::posts::edit_post),
+                        "/new",
+                        web::get().to(controller::admin::admin_posts::new_post),
                     )
-
+                    .app_data(data.clone())
                     .route(
-                        "/posts/post_id/delete",
-                        web::get().to(controller::posts::delete_post),
+                        "/create",
+                        web::post().to(controller::admin::admin_posts::create_post),
+                    )
+                    .route(
+                        "/new/category",
+                        web::get().to(controller::admin::admin_categories::new_category),
+                    )
+                    .app_data(data.clone())
+                    .route(
+                        "/create/category",
+                        web::post().to(controller::admin::admin_categories::create_category),
+                    )
+                    .route(
+                        "/category/edit/{id}",
+                        web::get().to(controller::admin::admin_categories::edit_category_html),
+                    )
+                    .app_data(data.clone())
+                    .route(
+                        "/category/update/{id}",
+                        web::post().to(controller::admin::admin_categories::edit_category),
                     )
                     .route("/categories", web::get().to(controller::posts::index))
-                    .route("/categories/page/{page_number}", web::get().to(_todo))
-                    .route(
-                        "/categories/category_id/edit",
-                        web::get().to(controller::category::edit_category),
-                    )
-                    .route(
-                        "/categories/new",
-                        web::get().to(controller::category::new_category),
-                    )
-                    .route(
-                        "/categories/{category_id}/delete",
-                        web::get().to(controller::category::delete_category),
-                    ),
+                    .route("/categories/page/{page_number}", web::get().to(_todo)),
             )
     })
     .bind(("127.0.0.1", 8080))?

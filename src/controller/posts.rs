@@ -1,3 +1,5 @@
+#![allow(clippy::manual_unwrap_or)]
+
 use crate::model::database;
 use actix_web::error::ErrorInternalServerError;
 use actix_web::{error, web, App, HttpResponse, HttpServer, ResponseError, Result};
@@ -9,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Post {
     pub post_id: u64,
     pub title: String,
@@ -18,7 +20,19 @@ pub struct Post {
     pub category_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct EditPost {
+    pub post_id: u64,
+    pub title: String,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct EditCategory {
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Category {
     pub id: u64,
     pub name: String,
@@ -35,9 +49,9 @@ pub async fn pagination_index(
 ) -> Result<HttpResponse, actix_web::Error> {
     let page_number = *page_number;
 
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
-    let categories = database::get_categories().await?;
+    let categories = database::init_categories().await?;
 
     let mut category_post_counts = vec![0; categories.len()];
     for (i, category) in categories.iter().enumerate() {
@@ -97,15 +111,25 @@ pub async fn pagination_index(
     let html_template =
         fs::read_to_string("templates/index.html").expect("Failed to read the file");
 
-    let template = liquid::ParserBuilder::with_stdlib()
+    let template_parser = liquid::ParserBuilder::with_stdlib()
         .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
+        .map_err(|err| {
+            eprintln!("Failed to build parser: {}", err);
+            actix_web::error::ErrorInternalServerError(format!("Failed to build parser: {}", err))
+        })?;
 
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let template = template_parser.parse(&html_template).map_err(|err| {
+        eprintln!("Failed to parse template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+    })?;
+
+    let output = template.render(&context).map_err(|err| {
+        eprintln!("Failed to render the template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to render the template: {}",
+            err
+        ))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -113,9 +137,9 @@ pub async fn pagination_index(
 }
 
 pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, actix_web::Error> {
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
-    let categories = database::get_categories().await?;
+    let categories = database::init_categories().await?;
 
     let mut category_post_counts = vec![0; categories.len()];
     for (i, category) in categories.iter().enumerate() {
@@ -130,7 +154,10 @@ pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, a
 
     let PaginationQuery { page_number } = query.into_inner();
 
-    let page = page_number.unwrap_or(1);
+    let page = match page_number {
+        Some(value) => value,
+        None => 1,
+    };
 
     let total_pages = (posts.len() as f64 / limit as f64).ceil() as i32;
 
@@ -179,15 +206,25 @@ pub async fn index(query: web::Query<PaginationQuery>) -> Result<HttpResponse, a
     let html_template =
         fs::read_to_string("templates/index.html").expect("Failed to read the file");
 
-    let template = liquid::ParserBuilder::with_stdlib()
+    let template_parser = liquid::ParserBuilder::with_stdlib()
         .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
+        .map_err(|err| {
+            eprintln!("Failed to build parser: {}", err);
+            actix_web::error::ErrorInternalServerError(format!("Failed to build parser: {}", err))
+        })?;
 
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let template = template_parser.parse(&html_template).map_err(|err| {
+        eprintln!("Failed to parse template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+    })?;
+
+    let output = template.render(&context).map_err(|err| {
+        eprintln!("Failed to render the template: {}", err);
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to render the template: {}",
+            err
+        ))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -213,15 +250,25 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
         let html_template =
             fs::read_to_string("templates/single_post.html").expect("Failed to read the file");
 
-        let template = liquid::ParserBuilder::with_stdlib()
+        let parser = liquid::ParserBuilder::with_stdlib()
             .build()
-            .unwrap()
-            .parse(&html_template)
-            .expect("Failed to parse template");
+            .map_err(|err| {
+                actix_web::error::ErrorInternalServerError(format!(
+                    "Failed to build parser: {}",
+                    err
+                ))
+            })?;
 
-        let output = template
-            .render(&context)
-            .expect("Failed to render the template");
+        let template = parser.parse(&html_template).map_err(|err| {
+            actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+        })?;
+
+        let output = template.render(&context).map_err(|err| {
+            actix_web::error::ErrorInternalServerError(format!(
+                "Failed to render the template: {}",
+                err
+            ))
+        })?;
 
         Ok(HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
@@ -234,7 +281,7 @@ pub async fn specific_post(path: web::Path<i32>) -> Result<HttpResponse, actix_w
 pub async fn category_posts(path: web::Path<(i32, i32)>) -> Result<HttpResponse> {
     let (category_id, page_number) = path.into_inner();
 
-    let posts = database::get_posts().await?;
+    let posts = database::init_posts().await?;
 
     let category_posts: Vec<Post> = posts
         .into_iter()
@@ -277,38 +324,22 @@ pub async fn category_posts(path: web::Path<(i32, i32)>) -> Result<HttpResponse>
     let html_template =
         fs::read_to_string("templates/post_category.html").expect("Failed to read the file");
 
-    let template = liquid::ParserBuilder::with_stdlib()
+    let parser = liquid::ParserBuilder::with_stdlib()
         .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
+        .map_err(|err| {
+            actix_web::error::ErrorInternalServerError(format!("Failed to build parser: {}", err))
+        })?;
 
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let template = parser.parse(&html_template).map_err(|err| {
+        actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+    })?;
 
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(output))
-}
-
-
-
-pub async fn edit_post() -> Result<HttpResponse, actix_web::Error> {
-    let html_template =
-        fs::read_to_string("templates/edit_post.html").expect("Failed to read the file");
-
-    let context = liquid::Object::new();
-
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
-
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let output = template.render(&context).map_err(|err| {
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to render the template: {}",
+            err
+        ))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -321,35 +352,24 @@ pub async fn update_post() -> Result<HttpResponse, actix_web::Error> {
 
     let context = liquid::Object::new();
 
-    let template = liquid::ParserBuilder::with_stdlib()
+    let parser = liquid::ParserBuilder::with_stdlib()
         .build()
-        .unwrap()
-        .parse(&html_template)
-        .expect("Failed to parse template");
+        .map_err(|err| {
+            actix_web::error::ErrorInternalServerError(format!("Failed to build parser: {}", err))
+        })?;
 
-    let output = template
-        .render(&context)
-        .expect("Failed to render the template");
+    let template = parser.parse(&html_template).map_err(|err| {
+        actix_web::error::ErrorInternalServerError(format!("Failed to parse template: {}", err))
+    })?;
+
+    let output = template.render(&context).map_err(|err| {
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to render the template: {}",
+            err
+        ))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(output))
-}
-
-pub async fn delete_post() -> Result<HttpResponse, actix_web::Error> {
-    // TODO: Implement the logic to connect to database and render the 'delete_post.html.liquid' template.
-
-    /*
-      todo!()
-      let template_str = include_str!("templates/delete_post.html.liquid");
-
-        let template = liquid::Parser::parse(template_str)
-            .map_err(|e| error::ErrorInternalServerError(format!("Failed to parse template: {}", e)))?;
-
-        let html = template.render(&liquid::Context::new())
-            .map_err(|e| error::ErrorInternalServerError(format!("Failed to render template: {}", e)))?;
-    */
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(()))
 }
